@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintained by CRM Kraft](https://img.shields.io/badge/Maintained%20by-CRM%20Kraft-blue)](https://crm-kraft.com)
 
-The most complete and actively maintained **Close CRM** community node for [n8n](https://n8n.io). Built and maintained by [CRM Kraft](https://crm-kraft.com) — a specialist Close CRM consultancy with 5+ years of experience and 130+ Close CRM implementations.
+The most complete and actively maintained **Close CRM** community node for [n8n](https://n8n.io). Supports 87+ operations across 19 resources. Built and maintained by [CRM Kraft](https://crm-kraft.com) — a specialist Close CRM consultancy with 5+ years of experience and 130+ Close CRM implementations.
 
 ---
 
@@ -67,6 +67,9 @@ Perform operations on all major Close CRM resources.
 | **Email Template** | Get, Get All |
 | **Integration Link** | Get, Get All |
 | **Custom Activity** | Create, Get, Get All, Update, Delete |
+| **Custom Activity Type** | Get, Get All |
+| **Comment** | Create, Get, Get All, Update, Delete |
+| **User** | Get, Get All |
 
 ---
 
