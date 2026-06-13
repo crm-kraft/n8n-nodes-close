@@ -377,6 +377,14 @@ export class Close implements INodeType {
 						default: 'one_time',
 					},
 					{ displayName: 'Close Date', name: 'date_won', type: 'string', default: '' },
+				{
+					displayName: 'Custom Fields (JSON)',
+					name: 'custom_fields_json',
+					type: 'string',
+					default: '',
+					description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
+					typeOptions: { rows: 3 },
+				},
 				],
 			},
 			{
@@ -1657,14 +1665,23 @@ export class Close implements INodeType {
 							responseData = res.data || [];
 						}
 					} else if (operation === 'create') {
-						const leadId = this.getNodeParameter('leadId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = { lead_id: leadId, ...additionalFields };
-						responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
-					} else if (operation === 'update') {
-						const opportunityId = this.getNodeParameter('opportunityId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, additionalFields);
+					const leadId = this.getNodeParameter('leadId', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const { custom_fields_json: oppCfJson, ...oppFields } = additionalFields;
+					const body: IDataObject = { lead_id: leadId, ...oppFields };
+					if (oppCfJson) {
+						try { Object.assign(body, JSON.parse(oppCfJson as string)); } catch { /* ignore */ }
+					}
+					responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
+				} else if (operation === 'update') {
+					const opportunityId = this.getNodeParameter('opportunityId', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const { custom_fields_json: oppUpdCfJson, ...oppUpdFields } = additionalFields;
+					const updBody: IDataObject = { ...oppUpdFields };
+					if (oppUpdCfJson) {
+						try { Object.assign(updBody, JSON.parse(oppUpdCfJson as string)); } catch { /* ignore */ }
+					}
+					responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
 					} else if (operation === 'delete') {
 						const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/opportunity/${opportunityId}/`);
