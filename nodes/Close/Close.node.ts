@@ -1716,6 +1716,8 @@ export class Close implements INodeType {
 					if (additionalFields.url) body.url = additionalFields.url;
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
 					const cfValue = cfMapper?.value as IDataObject | null;
+					// DEBUG: expose cfMapper contents
+					throw new NodeOperationError(this.getNode(), `DEBUG cfMapper=${JSON.stringify(cfMapper)} cfValue=${JSON.stringify(cfValue)}`, { itemIndex: i });
 					if (cfValue) {
 						for (const [k, v] of Object.entries(cfValue)) {
 							if (v !== null && v !== undefined && v !== '') {
