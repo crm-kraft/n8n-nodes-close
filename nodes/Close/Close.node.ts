@@ -50,6 +50,7 @@ export class Close implements INodeType {
 					{ name: 'Comment', value: 'comment' },
 					{ name: 'Contact', value: 'contact' },
 					{ name: 'Custom Activity', value: 'customActivity' },
+					{ name: 'Custom Activity Type', value: 'customActivityType' },
 					{ name: 'Custom Field', value: 'customField' },
 					{ name: 'Email', value: 'email' },
 					{ name: 'Email Template', value: 'emailTemplate' },
@@ -947,12 +948,13 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['customActivity'] } },
 				options: [
-					{ name: 'Create', value: 'create', action: 'Create a custom activity' },
-					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity' },
-					{ name: 'Get', value: 'get', action: 'Get a custom activity' },
-					{ name: 'Update', value: 'update', action: 'Update a custom activity' },
+					{ name: 'Create', value: 'create', action: 'Create a custom activity instance' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity instance' },
+					{ name: 'Get', value: 'get', action: 'Get a custom activity instance' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all custom activity instances for a lead' },
+					{ name: 'Update', value: 'update', action: 'Update a custom activity instance' },
 				],
-				default: 'create',
+				default: 'getAll',
 			},
 			{
 				displayName: 'Custom Activity ID',
@@ -961,6 +963,14 @@ export class Close implements INodeType {
 				default: '',
 				required: true,
 				displayOptions: { show: { resource: ['customActivity'], operation: ['get', 'update', 'delete'] } },
+			},
+			{
+				displayName: 'Lead ID',
+				name: 'customActivityLeadId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'getAll'] } },
 			},
 			{
 				displayName: 'Activity Type',
@@ -972,12 +982,49 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customActivity'], operation: ['create'] } },
 			},
 			{
-				displayName: 'Lead ID',
-				name: 'leadId',
-				type: 'string',
-				default: '',
-				required: true,
-				displayOptions: { show: { resource: ['customActivity'], operation: ['create'] } },
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['customActivity'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Custom Activity Type ID',
+						name: 'custom_activity_type_id',
+						type: 'string',
+						default: '',
+						description: 'Filter by a specific custom activity type ID',
+					},
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return instances created after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return instances created before this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date After',
+						name: 'activity_at__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return instances that occurred after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date Before',
+						name: 'activity_at__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return instances that occurred before this date/time (exclusive)',
+					},
+				],
 			},
 			{
 				displayName: 'Additional Fields',
@@ -988,25 +1035,76 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
 				options: [
 					{
-						displayName: 'Status',
-						name: 'status',
-						type: 'options',
-						options: [
-							{ name: 'Draft', value: 'draft' },
-							{ name: 'Published', value: 'published' },
-						],
-						default: 'draft',
+						displayName: 'Activity At',
+						name: 'activity_at',
+						type: 'dateTime',
+						default: '',
+						description: 'When the activity occurred (defaults to now)',
 					},
 					{
 						displayName: 'Custom Fields (JSON)',
 						name: 'custom_fields_json',
 						type: 'string',
 						default: '',
-						description: 'JSON object of custom field ID to value pairs',
+						description: 'JSON object of custom field ID to value pairs, e.g. {"cf_abc123": "value"}',
 					},
 				],
 			},
-
+			// ─── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['customActivityType'] } },
+				options: [
+					{ name: 'Create', value: 'create', action: 'Create a custom activity type' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity type' },
+					{ name: 'Get', value: 'get', action: 'Get a custom activity type' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all custom activity types' },
+					{ name: 'Update', value: 'update', action: 'Update a custom activity type' },
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Custom Activity Type ID',
+				name: 'customActivityTypeId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['customActivityType'], operation: ['get', 'update', 'delete'] } },
+			},
+			{
+				displayName: 'Name',
+				name: 'customActivityTypeName',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['customActivityType'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['customActivityType'], operation: ['create', 'update'] } },
+				options: [
+					{
+						displayName: 'Description',
+						name: 'description',
+						type: 'string',
+						default: '',
+					},
+					{
+						displayName: 'API Create URL',
+						name: 'api_create_url',
+						type: 'string',
+						default: '',
+						description: 'Optional webhook URL called when an instance is created',
+					},
+				],
+			},
 			// ─── COMMENT ──────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
@@ -1758,12 +1856,26 @@ export class Close implements INodeType {
 					if (operation === 'get') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/custom/${id}/`);
+					} else if (operation === 'getAll') {
+						const leadId = this.getNodeParameter('customActivityLeadId', i) as string;
+						const filters = this.getNodeParameter('filters', i) as IDataObject;
+						const qs: IDataObject = { lead_id: leadId };
+						if (filters.custom_activity_type_id) qs.custom_activity_type_id = filters.custom_activity_type_id;
+						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
+						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/custom/', {}, qs);
+						responseData = res.data || [];
 					} else if (operation === 'create') {
+						const leadId = this.getNodeParameter('customActivityLeadId', i) as string;
 						const activityTypeId = this.getNodeParameter('activityTypeId', i) as string;
-						const leadId = this.getNodeParameter('leadId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = { activity_at: new Date().toISOString(), lead_id: leadId, _type: activityTypeId };
-						if (additionalFields.status) body.status = additionalFields.status;
+						const body: IDataObject = {
+							activity_at: additionalFields.activity_at || new Date().toISOString(),
+							lead_id: leadId,
+							_type: activityTypeId,
+						};
 						if (additionalFields.custom_fields_json) {
 							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
 						}
@@ -1772,7 +1884,7 @@ export class Close implements INodeType {
 						const id = this.getNodeParameter('customActivityId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
-						if (additionalFields.status) body.status = additionalFields.status;
+						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
 						if (additionalFields.custom_fields_json) {
 							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
 						}
@@ -1780,6 +1892,29 @@ export class Close implements INodeType {
 					} else if (operation === 'delete') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/activity/custom/${id}/`);
+						responseData = { success: true };
+					}
+				}
+				// ── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
+				else if (resource === 'customActivityType') {
+					if (operation === 'getAll') {
+						const res = await closeApiRequest.call(this, 'GET', '/custom_activity/');
+						responseData = res.data || [];
+					} else if (operation === 'get') {
+						const id = this.getNodeParameter('customActivityTypeId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/custom_activity/${id}/`);
+					} else if (operation === 'create') {
+						const name = this.getNodeParameter('customActivityTypeName', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = { name, ...additionalFields };
+						responseData = await closeApiRequest.call(this, 'POST', '/custom_activity/', body);
+					} else if (operation === 'update') {
+						const id = this.getNodeParameter('customActivityTypeId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/custom_activity/${id}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const id = this.getNodeParameter('customActivityTypeId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/custom_activity/${id}/`);
 						responseData = { success: true };
 					}
 				}
