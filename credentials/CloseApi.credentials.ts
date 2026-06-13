@@ -1,8 +1,9 @@
-import { ICredentialType, INodeProperties } from 'n8n-workflow';
+import { ICredentialType, INodeProperties, Icon } from 'n8n-workflow';
 
 export class CloseApi implements ICredentialType {
 	name = 'closeApi';
 	displayName = 'Close.com API';
+	icon: Icon = 'file:close.svg' as Icon;
 	documentationUrl = 'https://developer.close.com/';
 	properties: INodeProperties[] = [
 		{

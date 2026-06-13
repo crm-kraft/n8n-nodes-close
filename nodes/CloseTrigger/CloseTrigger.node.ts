@@ -9,8 +9,6 @@ import {
 	INodePropertyOptions,
 		NodeOperationError,
 		NodeConnectionTypes,
-		NodeApiError,
-		JsonObject,
 	} from 'n8n-workflow';
 import { closeApiRequest } from '../Close/GenericFunctions';
 
