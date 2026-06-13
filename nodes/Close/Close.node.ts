@@ -18,6 +18,7 @@ import { closeApiRequest, closeApiRequestAllItems } from './GenericFunctions';
 
 
 // ─── Helper: build ResourceMapperFields from Close CRM custom field list ─────
+// Close CRM API returns choices as a plain string array: ["Option A", "Option B"]
 function buildResourceMapperFields(fields: IDataObject[]): ResourceMapperFields {
 	const mapperFields: ResourceMapperField[] = fields.map((f: IDataObject) => {
 		const fieldType = f.type as string;
@@ -26,24 +27,29 @@ function buildResourceMapperFields(fields: IDataObject[]): ResourceMapperFields 
 
 		if (fieldType === 'number') {
 			type = 'number';
-		} else if (fieldType === 'date') {
+		} else if (fieldType === 'date' || fieldType === 'datetime') {
 			type = 'dateTime';
-		} else if (fieldType === 'datetime') {
-			type = 'dateTime';
-		} else if (fieldType === 'choices' || fieldType === 'choice') {
+		} else if (
+			fieldType === 'choices' ||
+			fieldType === 'choice' ||
+			fieldType === 'multiple_choice' ||
+			fieldType === 'multiselect' ||
+			(f.choices !== null && f.choices !== undefined)
+		) {
 			type = 'options';
-			const choices = (f.choices as IDataObject[]) || [];
-			options = choices.map((c: IDataObject) => ({
-				name: c.display as string || c.value as string,
-				value: c.id as string || c.value as string,
-			}));
-		} else if (fieldType === 'multiple_choice' || fieldType === 'multiselect') {
-			type = 'options';
-			const choices = (f.choices as IDataObject[]) || [];
-			options = choices.map((c: IDataObject) => ({
-				name: c.display as string || c.value as string,
-				value: c.id as string || c.value as string,
-			}));
+			// choices is a plain string array: ["Option A", "Option B"]
+			const rawChoices = f.choices as (string | IDataObject)[] | null;
+			if (rawChoices && rawChoices.length > 0) {
+				options = rawChoices.map((c) => {
+					if (typeof c === 'string') {
+						return { name: c, value: c };
+					}
+					// fallback for object-shaped choices
+					const label = (c.display as string) || (c.name as string) || (c.value as string) || String(c);
+					const val = (c.id as string) || (c.value as string) || label;
+					return { name: label, value: val };
+				});
+			}
 		}
 
 		const field: ResourceMapperField = {
@@ -60,6 +66,20 @@ function buildResourceMapperFields(fields: IDataObject[]): ResourceMapperFields 
 		return field;
 	});
 	return { fields: mapperFields };
+}
+
+// ─── Helper: merge shared custom fields for a given object type ───────────────
+function filterSharedFields(sharedFields: IDataObject[], objectType: string, activityTypeId?: string): IDataObject[] {
+	return sharedFields.filter((f: IDataObject) => {
+		const associations = (f.associations as IDataObject[]) || [];
+		return associations.some((a: IDataObject) => {
+			if (a.object_type !== objectType) return false;
+			if (objectType === 'custom_activity_type' && activityTypeId) {
+				return a.custom_activity_type_id === activityTypeId;
+			}
+			return true;
+		});
+	});
 }
 
 export class Close implements INodeType {
@@ -1616,25 +1636,41 @@ export class Close implements INodeType {
 			},
 		},
 
-		resourceMapping: {
-			async getLeadCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-				const response = await closeApiRequest.call(this, 'GET', '/custom_field/lead/');
-				return buildResourceMapperFields(response.data || []);
+			resourceMapping: {
+				async getLeadCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+					const [leadResp, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', '/custom_field/lead/'),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const leadFields = leadResp.data || [];
+					const sharedForLead = filterSharedFields(sharedResp.data || [], 'lead');
+					return buildResourceMapperFields([...leadFields, ...sharedForLead]);
+				},
+				async getContactCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+					const [contactResp, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', '/custom_field/contact/'),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const contactFields = contactResp.data || [];
+					const sharedForContact = filterSharedFields(sharedResp.data || [], 'contact');
+					return buildResourceMapperFields([...contactFields, ...sharedForContact]);
+				},
+				async getOpportunityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+					const [oppResp, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', '/custom_field/opportunity/'),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const oppFields = oppResp.data || [];
+					const sharedForOpp = filterSharedFields(sharedResp.data || [], 'opportunity');
+					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
+				},
+				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+					// Custom activity fields come from shared fields associated with custom_activity_type
+					const sharedResp = await closeApiRequest.call(this, 'GET', '/custom_field/shared/');
+					const sharedForActivity = filterSharedFields(sharedResp.data || [], 'custom_activity_type');
+					return buildResourceMapperFields(sharedForActivity);
+				},
 			},
-			async getContactCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-				const response = await closeApiRequest.call(this, 'GET', '/custom_field/contact/');
-				return buildResourceMapperFields(response.data || []);
-			},
-			async getOpportunityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-				const response = await closeApiRequest.call(this, 'GET', '/custom_field/opportunity/');
-				return buildResourceMapperFields(response.data || []);
-			},
-			async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-				// Custom activity fields are on the activity type — use shared custom fields
-				const response = await closeApiRequest.call(this, 'GET', '/custom_field/shared/');
-				return buildResourceMapperFields(response.data || []);
-			},
-		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
