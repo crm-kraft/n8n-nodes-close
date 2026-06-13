@@ -46,18 +46,21 @@ export class Close implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'Activity', value: 'activity' },
+					{ name: 'Call', value: 'call' },
 					{ name: 'Comment', value: 'comment' },
 					{ name: 'Contact', value: 'contact' },
 					{ name: 'Custom Activity', value: 'customActivity' },
 					{ name: 'Custom Field', value: 'customField' },
+					{ name: 'Email', value: 'email' },
 					{ name: 'Email Template', value: 'emailTemplate' },
 					{ name: 'Integration Link', value: 'integrationLink' },
 					{ name: 'Lead', value: 'lead' },
 					{ name: 'Lead Status', value: 'leadStatus' },
+					{ name: 'Note', value: 'note' },
 					{ name: 'Opportunity', value: 'opportunity' },
 					{ name: 'Opportunity Status', value: 'opportunityStatus' },
 					{ name: 'Pipeline', value: 'pipeline' },
+					{ name: 'SMS', value: 'sms' },
 					{ name: 'Smart View', value: 'smartView' },
 					{ name: 'Task', value: 'task' },
 					{ name: 'User', value: 'user' },
@@ -484,28 +487,29 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['task'], operation: ['getAll'], returnAll: [false] } },
 			},
 
-			// ─── ACTIVITY ─────────────────────────────────────────────────────────────
+			// ─── NOTE ─────────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
-				displayOptions: { show: { resource: ['activity'] } },
+				displayOptions: { show: { resource: ['note'] } },
 				options: [
-					{ name: 'Create Note', value: 'createNote', action: 'Create a note activity' },
-					{ name: 'Delete', value: 'delete', action: 'Delete an activity' },
-					{ name: 'Get', value: 'get', action: 'Get an activity' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all activities for a lead' },
+					{ name: 'Create', value: 'create', action: 'Create a note' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a note' },
+					{ name: 'Get', value: 'get', action: 'Get a note' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all notes for a lead' },
+					{ name: 'Update', value: 'update', action: 'Update a note' },
 				],
 				default: 'getAll',
 			},
 			{
-				displayName: 'Activity ID',
-				name: 'activityId',
+				displayName: 'Note ID',
+				name: 'noteId',
 				type: 'string',
 				default: '',
 				required: true,
-				displayOptions: { show: { resource: ['activity'], operation: ['get', 'delete'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['get', 'update', 'delete'] } },
 			},
 			{
 				displayName: 'Lead ID',
@@ -513,7 +517,7 @@ export class Close implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote', 'getAll'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create', 'getAll'] } },
 			},
 			{
 				displayName: 'Note Type',
@@ -524,7 +528,7 @@ export class Close implements INodeType {
 					{ name: 'Rich Text (HTML)', value: 'html' },
 				],
 				default: 'plain',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create', 'update'] } },
 			},
 			{
 				displayName: 'Note',
@@ -534,7 +538,7 @@ export class Close implements INodeType {
 				default: '',
 				required: true,
 				description: 'Plain text content of the note',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], noteType: ['plain'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create', 'update'], noteType: ['plain'] } },
 			},
 			{
 				displayName: 'Note HTML',
@@ -543,16 +547,16 @@ export class Close implements INodeType {
 				typeOptions: { rows: 6 },
 				default: '<body><p></p></body>',
 				required: true,
-				description: 'Rich text HTML content. Must be wrapped in &lt;body&gt;&lt;/body&gt; tags. Supports &lt;p&gt;, &lt;h1&gt;-&lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;, &lt;img&gt;, etc.',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], noteType: ['html'] } },
+				description: 'Rich text HTML content. Must be wrapped in &lt;body&gt;&lt;/body&gt; tags.',
+				displayOptions: { show: { resource: ['note'], operation: ['create', 'update'], noteType: ['html'] } },
 			},
 			{
 				displayName: 'Attach File',
 				name: 'attachFile',
 				type: 'boolean',
 				default: false,
-				description: 'Whether to attach a binary file to this note',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'] } },
+				description: 'Whether to attach a file to this note',
+				displayOptions: { show: { resource: ['note'], operation: ['create'] } },
 			},
 			{
 				displayName: 'Attachment Source',
@@ -563,7 +567,7 @@ export class Close implements INodeType {
 					{ name: 'Binary Data', value: 'binary' },
 				],
 				default: 'url',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create'], attachFile: [true] } },
 			},
 			{
 				displayName: 'File URL',
@@ -573,7 +577,7 @@ export class Close implements INodeType {
 				required: true,
 				placeholder: 'https://example.com/document.pdf',
 				description: 'URL of the file to download and attach to the note',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true], attachmentSource: ['url'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create'], attachFile: [true], attachmentSource: ['url'] } },
 			},
 			{
 				displayName: 'Binary Property',
@@ -582,7 +586,206 @@ export class Close implements INodeType {
 				default: 'data',
 				required: true,
 				description: 'Name of the binary property containing the file to attach',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true], attachmentSource: ['binary'] } },
+				displayOptions: { show: { resource: ['note'], operation: ['create'], attachFile: [true], attachmentSource: ['binary'] } },
+			},
+			// ─── CALL ─────────────────────────────────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['call'] } },
+				options: [
+					{ name: 'Create', value: 'create', action: 'Create a call' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a call' },
+					{ name: 'Get', value: 'get', action: 'Get a call' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all calls for a lead' },
+					{ name: 'Update', value: 'update', action: 'Update a call' },
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Call ID',
+				name: 'callId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['call'], operation: ['get', 'update', 'delete'] } },
+			},
+			{
+				displayName: 'Lead ID',
+				name: 'callLeadId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['call'], operation: ['create', 'getAll'] } },
+			},
+			{
+				displayName: 'Direction',
+				name: 'direction',
+				type: 'options',
+				options: [
+					{ name: 'Outbound', value: 'outbound' },
+					{ name: 'Inbound', value: 'inbound' },
+				],
+				default: 'outbound',
+				required: true,
+				displayOptions: { show: { resource: ['call'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Status',
+				name: 'callStatus',
+				type: 'options',
+				options: [
+					{ name: 'Answered', value: 'answered' },
+					{ name: 'No Answer', value: 'no-answer' },
+					{ name: 'Voicemail Left', value: 'vm-left' },
+					{ name: 'Busy', value: 'busy' },
+					{ name: 'Error', value: 'error' },
+				],
+				default: 'answered',
+				required: true,
+				displayOptions: { show: { resource: ['call'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['call'], operation: ['create', 'update'] } },
+				options: [
+					{ displayName: 'Note', name: 'note', type: 'string', default: '', typeOptions: { rows: 3 } },
+					{ displayName: 'Duration (seconds)', name: 'duration', type: 'number', default: 0 },
+					{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
+					{ displayName: 'Contact ID', name: 'contact_id', type: 'string', default: '' },
+				],
+			},
+			// ─── EMAIL ────────────────────────────────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['email'] } },
+				options: [
+					{ name: 'Create (Send)', value: 'create', action: 'Send an email' },
+					{ name: 'Delete', value: 'delete', action: 'Delete an email' },
+					{ name: 'Get', value: 'get', action: 'Get an email' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all emails for a lead' },
+					{ name: 'Update', value: 'update', action: 'Update an email' },
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'Email ID',
+				name: 'emailId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['email'], operation: ['get', 'update', 'delete'] } },
+			},
+			{
+				displayName: 'Lead ID',
+				name: 'emailLeadId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['email'], operation: ['create', 'getAll'] } },
+			},
+			{
+				displayName: 'To',
+				name: 'emailTo',
+				type: 'string',
+				default: '',
+				required: true,
+				placeholder: 'contact@example.com',
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Subject',
+				name: 'emailSubject',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Body (HTML)',
+				name: 'emailBody',
+				type: 'string',
+				typeOptions: { rows: 6 },
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['email'], operation: ['create', 'update'] } },
+				options: [
+					{ displayName: 'CC', name: 'cc', type: 'string', default: '' },
+					{ displayName: 'BCC', name: 'bcc', type: 'string', default: '' },
+					{ displayName: 'Sender (Email)', name: 'sender', type: 'string', default: '' },
+					{ displayName: 'Template ID', name: 'template_id', type: 'string', default: '' },
+				],
+			},
+			// ─── SMS ──────────────────────────────────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['sms'] } },
+				options: [
+					{ name: 'Create (Send)', value: 'create', action: 'Send an SMS' },
+					{ name: 'Delete', value: 'delete', action: 'Delete an SMS' },
+					{ name: 'Get', value: 'get', action: 'Get an SMS' },
+					{ name: 'Get All', value: 'getAll', action: 'Get all SMS messages for a lead' },
+					{ name: 'Update', value: 'update', action: 'Update an SMS' },
+				],
+				default: 'getAll',
+			},
+			{
+				displayName: 'SMS ID',
+				name: 'smsId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['sms'], operation: ['get', 'update', 'delete'] } },
+			},
+			{
+				displayName: 'Lead ID',
+				name: 'smsLeadId',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['sms'], operation: ['create', 'getAll'] } },
+			},
+			{
+				displayName: 'Text',
+				name: 'smsText',
+				type: 'string',
+				typeOptions: { rows: 3 },
+				default: '',
+				required: true,
+				displayOptions: { show: { resource: ['sms'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['sms'], operation: ['create', 'update'] } },
+				options: [
+					{ displayName: 'Contact ID', name: 'contact_id', type: 'string', default: '' },
+					{ displayName: 'Phone', name: 'remote_phone', type: 'string', default: '' },
+					{ displayName: 'Local Phone', name: 'local_phone', type: 'string', default: '' },
+				],
 			},
 			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
 			{
@@ -1216,30 +1419,24 @@ export class Close implements INodeType {
 					}
 				}
 
-				// ── ACTIVITY ──────────────────────────────────────────────────────────
-				else if (resource === 'activity') {
-					if (operation === 'createNote') {
+				// ── NOTE ─────────────────────────────────────────────────────────────────────
+				else if (resource === 'note') {
+					if (operation === 'create') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
 						const noteType = this.getNodeParameter('noteType', i) as string;
 						const attachFile = this.getNodeParameter('attachFile', i) as boolean;
-
-						// Build note body
 						const noteBody: IDataObject = { lead_id: leadId };
 						if (noteType === 'html') {
 							noteBody.note_html = this.getNodeParameter('noteHtml', i) as string;
 						} else {
 							noteBody.note = this.getNodeParameter('note', i) as string;
 						}
-
-						// Handle file attachment via Close Files API
 						if (attachFile) {
 							const attachmentSource = this.getNodeParameter('attachmentSource', i) as string;
 							let fileBuffer: Buffer;
 							let filename: string;
 							let contentType: string;
-
 							if (attachmentSource === 'url') {
-								// Download file from URL
 								const fileUrl = this.getNodeParameter('fileUrl', i) as string;
 								const urlResponse = await this.helpers.httpRequest({
 									method: 'GET',
@@ -1248,66 +1445,138 @@ export class Close implements INodeType {
 									returnFullResponse: true,
 								});
 								fileBuffer = Buffer.from(urlResponse.body as ArrayBuffer);
-								// Extract filename from URL path
 								const urlPath = new URL(fileUrl).pathname;
 								filename = urlPath.split('/').pop() || 'attachment';
-								// Determine content type from response headers or filename extension
 								const respContentType = (urlResponse.headers?.['content-type'] as string) || '';
 								contentType = respContentType.split(';')[0].trim() || 'application/octet-stream';
 							} else {
-								// Use binary data from input
 								const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
 								const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
 								filename = binaryData.fileName || 'attachment';
 								contentType = binaryData.mimeType || 'application/octet-stream';
 								fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
 							}
-
-							// Step 1: Get S3 upload URL from Close
-							const uploadMeta = await closeApiRequest.call(this, 'POST', '/files/upload/', {
-								filename,
-								content_type: contentType,
-							});
-
-							// Step 2: Upload file to S3 using FormData
+							const uploadMeta = await closeApiRequest.call(this, 'POST', '/files/upload/', { filename, content_type: contentType });
 							const s3Form = new FormData();
-							// Add all S3 policy fields first
 							for (const [key, value] of Object.entries(uploadMeta.upload.fields as Record<string, string>)) {
 								s3Form.append(key, value);
 							}
-							// File must be last
 							s3Form.append('file', new Blob([fileBuffer], { type: contentType }), filename);
-							const s3Options: IHttpRequestOptions = {
-								method: 'POST',
-								url: uploadMeta.upload.url,
-								body: s3Form,
-								ignoreHttpStatusErrors: true,
-							};
-							await this.helpers.httpRequest(s3Options);
-
-							// Step 3: Attach the uploaded file URL to the note
-							noteBody.attachments = [{
-								url: uploadMeta.download.url,
-								filename,
-								content_type: contentType,
-							}];
+							await this.helpers.httpRequest({ method: 'POST', url: uploadMeta.upload.url, body: s3Form, ignoreHttpStatusErrors: true } as IHttpRequestOptions);
+							noteBody.attachments = [{ url: uploadMeta.download.url, filename, content_type: contentType }];
 						}
-
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/note/', noteBody);
 					} else if (operation === 'get') {
-						const activityId = this.getNodeParameter('activityId', i) as string;
-						responseData = await closeApiRequest.call(this, 'GET', `/activity/${activityId}/`);
+						const noteId = this.getNodeParameter('noteId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/activity/note/${noteId}/`);
 					} else if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/', {}, { lead_id: leadId });
+						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, { lead_id: leadId });
 						responseData = res.data || [];
+					} else if (operation === 'update') {
+						const noteId = this.getNodeParameter('noteId', i) as string;
+						const noteType = this.getNodeParameter('noteType', i) as string;
+						const body: IDataObject = {};
+						if (noteType === 'html') {
+							body.note_html = this.getNodeParameter('noteHtml', i) as string;
+						} else {
+							body.note = this.getNodeParameter('note', i) as string;
+						}
+						responseData = await closeApiRequest.call(this, 'PUT', `/activity/note/${noteId}/`, body);
 					} else if (operation === 'delete') {
-						const activityId = this.getNodeParameter('activityId', i) as string;
-						await closeApiRequest.call(this, 'DELETE', `/activity/${activityId}/`);
+						const noteId = this.getNodeParameter('noteId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/activity/note/${noteId}/`);
 						responseData = { success: true };
 					}
 				}
-
+				// ── CALL ─────────────────────────────────────────────────────────────────────
+				else if (resource === 'call') {
+					if (operation === 'create') {
+						const leadId = this.getNodeParameter('callLeadId', i) as string;
+						const direction = this.getNodeParameter('direction', i) as string;
+						const status = this.getNodeParameter('callStatus', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = { lead_id: leadId, direction, disposition: status, ...additionalFields };
+						responseData = await closeApiRequest.call(this, 'POST', '/activity/call/', body);
+					} else if (operation === 'get') {
+						const callId = this.getNodeParameter('callId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/activity/call/${callId}/`);
+					} else if (operation === 'getAll') {
+						const leadId = this.getNodeParameter('callLeadId', i) as string;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, { lead_id: leadId });
+						responseData = res.data || [];
+					} else if (operation === 'update') {
+						const callId = this.getNodeParameter('callId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/activity/call/${callId}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const callId = this.getNodeParameter('callId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/activity/call/${callId}/`);
+						responseData = { success: true };
+					}
+				}
+				// ── EMAIL ────────────────────────────────────────────────────────────────────
+				else if (resource === 'email') {
+					if (operation === 'create') {
+						const leadId = this.getNodeParameter('emailLeadId', i) as string;
+						const to = this.getNodeParameter('emailTo', i) as string;
+						const subject = this.getNodeParameter('emailSubject', i) as string;
+						const body = this.getNodeParameter('emailBody', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const emailBody: IDataObject = {
+							lead_id: leadId,
+							to: [{ email: to }],
+							subject,
+							body_html: body,
+							status: 'outbox',
+						};
+						if (additionalFields.cc) emailBody.cc = [{ email: additionalFields.cc }];
+						if (additionalFields.bcc) emailBody.bcc = [{ email: additionalFields.bcc }];
+						if (additionalFields.sender) emailBody.sender = additionalFields.sender;
+						if (additionalFields.template_id) emailBody.template_id = additionalFields.template_id;
+						responseData = await closeApiRequest.call(this, 'POST', '/activity/email/', emailBody);
+					} else if (operation === 'get') {
+						const emailId = this.getNodeParameter('emailId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/activity/email/${emailId}/`);
+					} else if (operation === 'getAll') {
+						const leadId = this.getNodeParameter('emailLeadId', i) as string;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, { lead_id: leadId });
+						responseData = res.data || [];
+					} else if (operation === 'update') {
+						const emailId = this.getNodeParameter('emailId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/activity/email/${emailId}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const emailId = this.getNodeParameter('emailId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/activity/email/${emailId}/`);
+						responseData = { success: true };
+					}
+				}
+				// ── SMS ──────────────────────────────────────────────────────────────────────
+				else if (resource === 'sms') {
+					if (operation === 'create') {
+						const leadId = this.getNodeParameter('smsLeadId', i) as string;
+						const text = this.getNodeParameter('smsText', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = { lead_id: leadId, text, direction: 'outbound', status: 'outbox', ...additionalFields };
+						responseData = await closeApiRequest.call(this, 'POST', '/activity/sms/', body);
+					} else if (operation === 'get') {
+						const smsId = this.getNodeParameter('smsId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/activity/sms/${smsId}/`);
+					} else if (operation === 'getAll') {
+						const leadId = this.getNodeParameter('smsLeadId', i) as string;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, { lead_id: leadId });
+						responseData = res.data || [];
+					} else if (operation === 'update') {
+						const smsId = this.getNodeParameter('smsId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/activity/sms/${smsId}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const smsId = this.getNodeParameter('smsId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/activity/sms/${smsId}/`);
+						responseData = { success: true };
+					}
+				}
 				// ── CUSTOM ACTIVITY ───────────────────────────────────────────────────
 				else if (resource === 'customActivity') {
 					if (operation === 'get') {
@@ -1317,16 +1586,10 @@ export class Close implements INodeType {
 						const activityTypeId = this.getNodeParameter('activityTypeId', i) as string;
 						const leadId = this.getNodeParameter('leadId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = {
-							activity_at: new Date().toISOString(),
-							lead_id: leadId,
-							_type: activityTypeId,
-						};
+						const body: IDataObject = { activity_at: new Date().toISOString(), lead_id: leadId, _type: activityTypeId };
 						if (additionalFields.status) body.status = additionalFields.status;
 						if (additionalFields.custom_fields_json) {
-							try {
-								Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string));
-							} catch (_) {}
+							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
 						}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
 					} else if (operation === 'update') {
@@ -1335,9 +1598,7 @@ export class Close implements INodeType {
 						const body: IDataObject = {};
 						if (additionalFields.status) body.status = additionalFields.status;
 						if (additionalFields.custom_fields_json) {
-							try {
-								Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string));
-							} catch (_) {}
+							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
 					} else if (operation === 'delete') {
@@ -1372,20 +1633,25 @@ export class Close implements INodeType {
 					} else if (operation === 'getAll') {
 						const res = await closeApiRequest.call(this, 'GET', '/email_template/');
 						responseData = res.data || [];
-					} else if (operation === 'create') {
-						const name = this.getNodeParameter('name', i) as string;
-						const subject = this.getNodeParameter('subject', i) as string;
-						const body_html = this.getNodeParameter('body_html', i) as string;
-						responseData = await closeApiRequest.call(this, 'POST', '/email_template/', { name, subject, body_html });
-					} else if (operation === 'update') {
-						const templateId = this.getNodeParameter('templateId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/email_template/${templateId}/`, additionalFields);
-					} else if (operation === 'delete') {
-						const templateId = this.getNodeParameter('templateId', i) as string;
-						await closeApiRequest.call(this, 'DELETE', `/email_template/${templateId}/`);
-						responseData = { success: true };
 					}
+				}
+
+				// ── LEAD STATUS ───────────────────────────────────────────────────────
+				else if (resource === 'leadStatus') {
+					const res = await closeApiRequest.call(this, 'GET', '/status/lead/');
+					responseData = res.data || [];
+				}
+
+				// ── OPPORTUNITY STATUS ────────────────────────────────────────────────
+				else if (resource === 'opportunityStatus') {
+					const res = await closeApiRequest.call(this, 'GET', '/status/opportunity/');
+					responseData = res.data || [];
+				}
+
+				// ── PIPELINE ──────────────────────────────────────────────────────────
+				else if (resource === 'pipeline') {
+					const res = await closeApiRequest.call(this, 'GET', '/pipeline/');
+					responseData = res.data || [];
 				}
 
 				// ── SMART VIEW ────────────────────────────────────────────────────────
@@ -1393,39 +1659,9 @@ export class Close implements INodeType {
 					if (operation === 'getAll') {
 						const res = await closeApiRequest.call(this, 'GET', '/saved_search/');
 						responseData = res.data || [];
-					} else if (operation === 'get') {
-						const id = this.getNodeParameter('smartViewId', i) as string;
-						responseData = await closeApiRequest.call(this, 'GET', `/saved_search/${id}/`);
 					} else if (operation === 'getLeads') {
 						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
 						responseData = await closeApiRequestAllItems.call(this, 'GET', '/lead/', {}, { saved_search_id: smartViewId });
-					} else if (operation === 'create') {
-						const name = this.getNodeParameter('name', i) as string;
-						const s_query = this.getNodeParameter('s_query', i) as string;
-						let queryObj: IDataObject = {};
-						try {
-							queryObj = JSON.parse(s_query);
-						} catch (e) {
-							throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
-						}
-						responseData = await closeApiRequest.call(this, 'POST', '/saved_search/', { name, s_query: queryObj });
-					} else if (operation === 'update') {
-						const id = this.getNodeParameter('smartViewId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = {};
-						if (additionalFields.name) body.name = additionalFields.name;
-						if (additionalFields.s_query) {
-							try {
-								body.s_query = JSON.parse(additionalFields.s_query as string);
-							} catch (e) {
-								throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
-							}
-						}
-						responseData = await closeApiRequest.call(this, 'PUT', `/saved_search/${id}/`, body);
-					} else if (operation === 'delete') {
-						const id = this.getNodeParameter('smartViewId', i) as string;
-						await closeApiRequest.call(this, 'DELETE', `/saved_search/${id}/`);
-						responseData = { success: true };
 					}
 				}
 
@@ -1442,49 +1678,8 @@ export class Close implements INodeType {
 				// ── CUSTOM FIELD ──────────────────────────────────────────────────────
 				else if (resource === 'customField') {
 					const objectType = this.getNodeParameter('objectType', i) as string;
-					if (operation === 'getAll') {
-						const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
-						responseData = res.data || [];
-					} else if (operation === 'get') {
-						const id = this.getNodeParameter('customFieldId', i) as string;
-						responseData = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/${id}/`);
-					} else if (operation === 'create') {
-						const name = this.getNodeParameter('name', i) as string;
-						const fieldType = this.getNodeParameter('fieldType', i) as string;
-						responseData = await closeApiRequest.call(this, 'POST', `/custom_field/${objectType}/`, { name, type: fieldType });
-					} else if (operation === 'update') {
-						const id = this.getNodeParameter('customFieldId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/custom_field/${objectType}/${id}/`, additionalFields);
-					} else if (operation === 'delete') {
-						const id = this.getNodeParameter('customFieldId', i) as string;
-						await closeApiRequest.call(this, 'DELETE', `/custom_field/${objectType}/${id}/`);
-						responseData = { success: true };
-					}
-				}
-
-				// ── INTEGRATION LINK ──────────────────────────────────────────────────
-				else if (resource === 'integrationLink') {
-					if (operation === 'getAll') {
-						const res = await closeApiRequest.call(this, 'GET', '/integration_link/');
-						responseData = res.data || [];
-					} else if (operation === 'get') {
-						const id = this.getNodeParameter('integrationLinkId', i) as string;
-						responseData = await closeApiRequest.call(this, 'GET', `/integration_link/${id}/`);
-					} else if (operation === 'create') {
-						const name = this.getNodeParameter('name', i) as string;
-						const url = this.getNodeParameter('url', i) as string;
-						const linkType = this.getNodeParameter('linkType', i) as string;
-						responseData = await closeApiRequest.call(this, 'POST', '/integration_link/', { name, url, type: linkType });
-					} else if (operation === 'update') {
-						const id = this.getNodeParameter('integrationLinkId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/integration_link/${id}/`, additionalFields);
-					} else if (operation === 'delete') {
-						const id = this.getNodeParameter('integrationLinkId', i) as string;
-						await closeApiRequest.call(this, 'DELETE', `/integration_link/${id}/`);
-						responseData = { success: true };
-					}
+					const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
+					responseData = res.data || [];
 				}
 
 				else {
