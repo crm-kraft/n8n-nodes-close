@@ -174,28 +174,29 @@ export class Close implements INodeType {
 					{ displayName: 'Contact Email', name: 'contact_email', type: 'string', default: '', description: 'Email address of the primary contact (creates a contact on the lead)' },
 					{ displayName: 'Contact Name', name: 'contact_name', type: 'string', default: '', description: 'Full name of the primary contact (creates a contact on the lead)' },
 					{ displayName: 'Contact Phone', name: 'contact_phone', type: 'string', default: '', description: 'Phone number of the primary contact (creates a contact on the lead)' },
-					{
-					displayName: 'Custom Fields',
-					name: 'customFields',
-					type: 'resourceMapper',
-					noDataExpression: true,
-					default: { mappingMode: 'defineBelow', value: null },
-					required: false,
-					typeOptions: {
-						resourceMapper: {
-							resourceMapperMethod: 'getLeadCustomFieldsForMapper',
-							mode: 'add',
-							fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
-							addAllFields: false,
-							noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
-						},
-					},
-				},
 					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
 																																		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
 					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
 				],
+			},
+			{
+				displayName: 'Custom Fields',
+				name: 'customFields',
+				type: 'resourceMapper',
+				noDataExpression: true,
+				default: { mappingMode: 'defineBelow', value: null },
+				required: false,
+				displayOptions: { show: { resource: ['lead'], operation: ['create', 'update'] } },
+				typeOptions: {
+					resourceMapper: {
+						resourceMapperMethod: 'getLeadCustomFieldsForMapper',
+						mode: 'add',
+						fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+						addAllFields: false,
+						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
+					},
+				},
 			},
 			{
 				displayName: 'Query',
@@ -306,23 +307,6 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
 				options: [
 					{
-					displayName: 'Custom Fields',
-					name: 'customFields',
-					type: 'resourceMapper',
-					noDataExpression: true,
-					default: { mappingMode: 'defineBelow', value: null },
-					required: false,
-					typeOptions: {
-						resourceMapper: {
-							resourceMapperMethod: 'getContactCustomFieldsForMapper',
-							mode: 'add',
-							fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
-							addAllFields: false,
-							noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
-						},
-					},
-				},
-					{
 						displayName: 'Email Addresses',
 						name: 'emails',
 						type: 'fixedCollection',
@@ -367,6 +351,24 @@ export class Close implements INodeType {
 					},
 					{ displayName: 'Title', name: 'title', type: 'string', default: '' },
 				],
+			},
+			{
+				displayName: 'Custom Fields',
+				name: 'customFields',
+				type: 'resourceMapper',
+				noDataExpression: true,
+				default: { mappingMode: 'defineBelow', value: null },
+				required: false,
+				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
+				typeOptions: {
+					resourceMapper: {
+						resourceMapperMethod: 'getContactCustomFieldsForMapper',
+						mode: 'add',
+						fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+						addAllFields: false,
+						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
+					},
+				},
 			},
 			{
 				displayName: 'Return All',
@@ -443,24 +445,25 @@ export class Close implements INodeType {
 						default: 'one_time',
 					},
 					{ displayName: 'Close Date', name: 'date_won', type: 'string', default: '' },
-				{
-					displayName: 'Custom Fields',
-					name: 'customFields',
-					type: 'resourceMapper',
-					noDataExpression: true,
-					default: { mappingMode: 'defineBelow', value: null },
-					required: false,
-					typeOptions: {
-						resourceMapper: {
-							resourceMapperMethod: 'getOpportunityCustomFieldsForMapper',
-							mode: 'add',
-							fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
-							addAllFields: false,
-							noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
-						},
+				],
+			},
+			{
+				displayName: 'Custom Fields',
+				name: 'customFields',
+				type: 'resourceMapper',
+				noDataExpression: true,
+				default: { mappingMode: 'defineBelow', value: null },
+				required: false,
+				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update'] } },
+				typeOptions: {
+					resourceMapper: {
+						resourceMapperMethod: 'getOpportunityCustomFieldsForMapper',
+						mode: 'add',
+						fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+						addAllFields: false,
+						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
 					},
 				},
-				],
 			},
 			{
 				displayName: 'Return All',
@@ -1130,24 +1133,25 @@ export class Close implements INodeType {
 						default: '',
 						description: 'When the activity occurred (defaults to now)',
 					},
-					{
-						displayName: 'Custom Fields',
-						name: 'customFields',
-						type: 'resourceMapper',
-						noDataExpression: true,
-						default: { mappingMode: 'defineBelow', value: null },
-						required: false,
-						typeOptions: {
-							resourceMapper: {
-								resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
-								mode: 'add',
-								fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
-								addAllFields: false,
-								noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
-							},
-						},
-					},
 				],
+			},
+			{
+				displayName: 'Custom Fields',
+				name: 'customFields',
+				type: 'resourceMapper',
+				noDataExpression: true,
+				default: { mappingMode: 'defineBelow', value: null },
+				required: false,
+				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
+				typeOptions: {
+					resourceMapper: {
+						resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
+						mode: 'add',
+						fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+						addAllFields: false,
+						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
+					},
+				},
 			},
 			// ─── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
 			{
@@ -1666,14 +1670,12 @@ export class Close implements INodeType {
 					if (additionalFields.description) body.description = additionalFields.description;
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
-					if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
@@ -1696,14 +1698,12 @@ export class Close implements INodeType {
 					if (additionalFields.description) body.description = additionalFields.description;
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
-					if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
@@ -1772,14 +1772,12 @@ export class Close implements INodeType {
 						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
-					if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
@@ -1797,14 +1795,12 @@ export class Close implements INodeType {
 						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
-					if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
@@ -1833,37 +1829,31 @@ export class Close implements INodeType {
 					} else if (operation === 'create') {
 					const leadId = this.getNodeParameter('leadId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-					const { customFields: oppCf, ...oppFields } = additionalFields;
-					const body: IDataObject = { lead_id: leadId, ...oppFields };
-					if (oppCf) {
-						const cfMapper = oppCf as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
-							}
+					const body: IDataObject = { lead_id: leadId, ...additionalFields };
+				const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+				const cfValue = cfMapper?.value as IDataObject | null;
+				if (cfValue) {
+					for (const [k, v] of Object.entries(cfValue)) {
+						if (v !== null && v !== undefined && v !== '') {
+							body[k] = v;
 						}
 					}
-					responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
+				}
+				responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
 				} else if (operation === 'update') {
 					const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-					const { customFields: oppUpdCf, ...oppUpdFields } = additionalFields;
-					const updBody: IDataObject = { ...oppUpdFields };
-					if (oppUpdCf) {
-						const cfMapper = oppUpdCf as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									updBody[k] = v;
-								}
-							}
+					const updBody: IDataObject = { ...additionalFields };
+				const cfMapperUpd = this.getNodeParameter('customFields', i, {}) as IDataObject;
+				const cfValueUpd = cfMapperUpd?.value as IDataObject | null;
+				if (cfValueUpd) {
+					for (const [k, v] of Object.entries(cfValueUpd)) {
+						if (v !== null && v !== undefined && v !== '') {
+							updBody[k] = v;
 						}
 					}
-					responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
+				}
+				responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
 					} else if (operation === 'delete') {
 						const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/opportunity/${opportunityId}/`);
@@ -2143,14 +2133,12 @@ export class Close implements INodeType {
 							lead_id: leadId,
 							_type: activityTypeId,
 						};
-						if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
@@ -2160,14 +2148,12 @@ export class Close implements INodeType {
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
-						if (additionalFields.customFields) {
-						const cfMapper = additionalFields.customFields as IDataObject;
-						const cfValue = cfMapper.value as IDataObject | null;
-						if (cfValue) {
-							for (const [k, v] of Object.entries(cfValue)) {
-								if (v !== null && v !== undefined && v !== '') {
-									body[k] = v;
-								}
+						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValue = cfMapper?.value as IDataObject | null;
+					if (cfValue) {
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[k] = v;
 							}
 						}
 					}
