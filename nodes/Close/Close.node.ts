@@ -140,11 +140,12 @@ export class Close implements INodeType {
 							displayName: 'Custom Field',
 							values: [
 								{
-									displayName: 'Field Key',
+									displayName: 'Field Name or ID',
 									name: 'key',
-									type: 'string',
+									type: 'options',
+									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+									typeOptions: { loadOptionsMethod: 'getLeadCustomFields' },
 									default: '',
-									description: 'The custom field key, e.g. cf_abc123',
 								},
 								{
 									displayName: 'Value',
@@ -285,11 +286,12 @@ export class Close implements INodeType {
 							displayName: 'Custom Field',
 							values: [
 								{
-									displayName: 'Field Key',
+									displayName: 'Field Name or ID',
 									name: 'key',
-									type: 'string',
+									type: 'options',
+									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+									typeOptions: { loadOptionsMethod: 'getContactCustomFields' },
 									default: '',
-									description: 'The custom field key, e.g. cf_abc123',
 								},
 								{
 									displayName: 'Value',
@@ -437,11 +439,12 @@ export class Close implements INodeType {
 							displayName: 'Custom Field',
 							values: [
 								{
-									displayName: 'Field Key',
+									displayName: 'Field Name or ID',
 									name: 'key',
-									type: 'string',
+									type: 'options',
+									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+									typeOptions: { loadOptionsMethod: 'getOpportunityCustomFields' },
 									default: '',
-									description: 'The custom field key, e.g. cf_abc123',
 								},
 								{
 									displayName: 'Value',
@@ -1138,11 +1141,12 @@ export class Close implements INodeType {
 								displayName: 'Custom Field',
 								values: [
 									{
-										displayName: 'Field Key',
+										displayName: 'Field Name or ID',
 										name: 'key',
-										type: 'string',
+										type: 'options',
+										description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+										typeOptions: { loadOptionsMethod: 'getCustomActivityCustomFields' },
 										default: '',
-										description: 'The custom field key, e.g. cf_abc123',
 									},
 									{
 										displayName: 'Value',
@@ -1579,6 +1583,35 @@ export class Close implements INodeType {
 				return (response.data || []).map((u: IDataObject) => ({
 					name: `${u.first_name} ${u.last_name}`.trim() || (u.email as string),
 					value: u.id as string,
+				}));
+			},
+			async getLeadCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/custom_field/lead/');
+				return (response.data || []).map((f: IDataObject) => ({
+					name: f.name as string,
+					value: f.id as string,
+				}));
+			},
+			async getContactCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/custom_field/contact/');
+				return (response.data || []).map((f: IDataObject) => ({
+					name: f.name as string,
+					value: f.id as string,
+				}));
+			},
+			async getOpportunityCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/custom_field/opportunity/');
+				return (response.data || []).map((f: IDataObject) => ({
+					name: f.name as string,
+					value: f.id as string,
+				}));
+			},
+			async getCustomActivityCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				// For custom activities, fields are on the activity type — return shared custom fields
+				const response = await closeApiRequest.call(this, 'GET', '/custom_field/shared/');
+				return (response.data || []).map((f: IDataObject) => ({
+					name: f.name as string,
+					value: f.id as string,
 				}));
 			},
 		},
