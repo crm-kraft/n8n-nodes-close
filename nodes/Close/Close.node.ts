@@ -123,9 +123,20 @@ export class Close implements INodeType {
 				default: {},
 				displayOptions: { show: { resource: ['lead'], operation: ['create', 'update'] } },
 				options: [
+					{ displayName: 'Contact Email', name: 'contact_email', type: 'string', default: '', description: 'Email address of the primary contact (creates a contact on the lead)' },
+					{ displayName: 'Contact Name', name: 'contact_name', type: 'string', default: '', description: 'Full name of the primary contact (creates a contact on the lead)' },
+					{ displayName: 'Contact Phone', name: 'contact_phone', type: 'string', default: '', description: 'Phone number of the primary contact (creates a contact on the lead)' },
+					{
+						displayName: 'Custom Fields (JSON)',
+						name: 'custom_fields_json',
+						type: 'string',
+						default: '',
+						description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
+						typeOptions: { rows: 3 },
+					},
 					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
-																																																	description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
+																																		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
 					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
 				],
 			},
@@ -237,8 +248,58 @@ export class Close implements INodeType {
 				default: {},
 				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
 				options: [
+					{
+						displayName: 'Custom Fields (JSON)',
+						name: 'custom_fields_json',
+						type: 'string',
+						default: '',
+						description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
+						typeOptions: { rows: 3 },
+					},
+					{
+						displayName: 'Email Addresses',
+						name: 'emails',
+						type: 'fixedCollection',
+						placeholder: 'Add Email',
+						default: {},
+						typeOptions: { multipleValues: true },
+						options: [{
+							name: 'emailValues',
+							displayName: 'Email',
+							values: [
+								{ displayName: 'Email', name: 'email', type: 'string', placeholder: 'name@email.com', default: '' },
+								{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
+									{ name: 'Direct', value: 'direct' },
+									{ name: 'Home', value: 'home' },
+									{ name: 'Office', value: 'office' },
+									{ name: 'Other', value: 'other' },
+								]},
+							],
+						}],
+					},
+					{
+						displayName: 'Phone Numbers',
+						name: 'phones',
+						type: 'fixedCollection',
+						placeholder: 'Add Phone',
+						default: {},
+						typeOptions: { multipleValues: true },
+						options: [{
+							name: 'phoneValues',
+							displayName: 'Phone',
+							values: [
+								{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
+								{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
+									{ name: 'Direct', value: 'direct' },
+									{ name: 'Home', value: 'home' },
+									{ name: 'Mobile', value: 'mobile' },
+									{ name: 'Office', value: 'office' },
+									{ name: 'Other', value: 'other' },
+								]},
+							],
+						}],
+					},
 					{ displayName: 'Title', name: 'title', type: 'string', default: '' },
-					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
 				],
 			},
 			{
@@ -1456,15 +1517,39 @@ export class Close implements INodeType {
 							const res = await closeApiRequest.call(this, 'GET', '/lead/', {}, { query, _limit: limit });
 							responseData = res.data || [];
 						}
-					} else if (operation === 'create') {
-						const companyName = this.getNodeParameter('companyName', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = { name: companyName, ...additionalFields };
-						responseData = await closeApiRequest.call(this, 'POST', '/lead/', body);
-					} else if (operation === 'update') {
-						const leadId = this.getNodeParameter('leadId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/lead/${leadId}/`, additionalFields);
+				} else if (operation === 'create') {
+					const companyName = this.getNodeParameter('companyName', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const body: IDataObject = { name: companyName };
+					if (additionalFields.description) body.description = additionalFields.description;
+					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
+					if (additionalFields.url) body.url = additionalFields.url;
+					if (additionalFields.custom_fields_json) {
+						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					}
+					// Inline contact creation
+					const contactName = additionalFields.contact_name as string | undefined;
+					const contactEmail = additionalFields.contact_email as string | undefined;
+					const contactPhone = additionalFields.contact_phone as string | undefined;
+					if (contactName || contactEmail || contactPhone) {
+						const contact: IDataObject = {};
+						if (contactName) contact.name = contactName;
+						if (contactEmail) contact.emails = [{ email: contactEmail, type: 'office' }];
+						if (contactPhone) contact.phones = [{ phone: contactPhone, type: 'office' }];
+						body.contacts = [contact];
+					}
+					responseData = await closeApiRequest.call(this, 'POST', '/lead/', body);
+				} else if (operation === 'update') {
+					const leadId = this.getNodeParameter('leadId', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const body: IDataObject = {};
+					if (additionalFields.description) body.description = additionalFields.description;
+					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
+					if (additionalFields.url) body.url = additionalFields.url;
+					if (additionalFields.custom_fields_json) {
+						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					}
+					responseData = await closeApiRequest.call(this, 'PUT', `/lead/${leadId}/`, body);
 					} else if (operation === 'delete') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/lead/${leadId}/`);
@@ -1515,16 +1600,41 @@ export class Close implements INodeType {
 							const res = await closeApiRequest.call(this, 'GET', '/contact/', {}, { _limit: limit });
 							responseData = res.data || [];
 						}
-					} else if (operation === 'create') {
-						const leadId = this.getNodeParameter('leadId', i) as string;
-						const name = this.getNodeParameter('name', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const body: IDataObject = { lead_id: leadId, name, ...additionalFields };
-						responseData = await closeApiRequest.call(this, 'POST', '/contact/', body);
-					} else if (operation === 'update') {
-						const contactId = this.getNodeParameter('contactId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						responseData = await closeApiRequest.call(this, 'PUT', `/contact/${contactId}/`, additionalFields);
+				} else if (operation === 'create') {
+					const leadId = this.getNodeParameter('leadId', i) as string;
+					const name = this.getNodeParameter('name', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const body: IDataObject = { lead_id: leadId, name };
+					if (additionalFields.title) body.title = additionalFields.title;
+					if (additionalFields.phones) {
+						const phoneItems = (additionalFields.phones as IDataObject).phoneValues as IDataObject[] || [];
+						if (phoneItems.length) body.phones = phoneItems.map((p) => ({ phone: p.phone, type: p.type }));
+					}
+					if (additionalFields.emails) {
+						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
+						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
+					}
+					if (additionalFields.custom_fields_json) {
+						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					}
+					responseData = await closeApiRequest.call(this, 'POST', '/contact/', body);
+				} else if (operation === 'update') {
+					const contactId = this.getNodeParameter('contactId', i) as string;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const body: IDataObject = {};
+					if (additionalFields.title) body.title = additionalFields.title;
+					if (additionalFields.phones) {
+						const phoneItems = (additionalFields.phones as IDataObject).phoneValues as IDataObject[] || [];
+						if (phoneItems.length) body.phones = phoneItems.map((p) => ({ phone: p.phone, type: p.type }));
+					}
+					if (additionalFields.emails) {
+						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
+						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
+					}
+					if (additionalFields.custom_fields_json) {
+						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					}
+					responseData = await closeApiRequest.call(this, 'PUT', `/contact/${contactId}/`, body);
 					} else if (operation === 'delete') {
 						const contactId = this.getNodeParameter('contactId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/contact/${contactId}/`);
