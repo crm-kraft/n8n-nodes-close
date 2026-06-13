@@ -19,6 +19,13 @@ export class Close implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Interact with Close CRM',
+		codex: {
+			categories: ['Sales', 'CRM'],
+			alias: ['close', 'close crm', 'closecrm', 'close.com', 'crm', 'leads', 'contacts', 'opportunities', 'sales'],
+			resources: {
+				primaryDocumentation: [{ url: 'https://developer.close.com/' }],
+			},
+		},
 		defaults: {
 			name: 'Close',
 		},

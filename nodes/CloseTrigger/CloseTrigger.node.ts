@@ -18,6 +18,13 @@ export class CloseTrigger implements INodeType {
 		group: ['trigger'],
 		version: 1,
 		description: 'Starts the workflow when Close CRM events occur',
+		codex: {
+			categories: ['Sales', 'CRM'],
+			alias: ['close', 'close crm', 'closecrm', 'close.com', 'crm', 'leads', 'contacts', 'opportunities', 'sales', 'webhook', 'trigger'],
+			resources: {
+				primaryDocumentation: [{ url: 'https://developer.close.com/' }],
+			},
+		},
 		defaults: {
 			name: 'Close Trigger',
 		},
