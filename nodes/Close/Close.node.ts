@@ -7,8 +7,11 @@ import {
 	INodeTypeDescription,
 	IDataObject,
 	NodeOperationError,
-	IHttpRequestOptions,
-} from 'n8n-workflow';
+		IHttpRequestOptions,
+		NodeConnectionTypes,
+		NodeApiError,
+		JsonObject,
+	} from 'n8n-workflow';
 import { closeApiRequest, closeApiRequestAllItems } from './GenericFunctions';
 
 export class Close implements INodeType {
@@ -30,8 +33,8 @@ export class Close implements INodeType {
 		defaults: {
 			name: 'Close',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'closeApi',
@@ -80,7 +83,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a lead' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a lead' },
 					{ name: 'Get', value: 'get', action: 'Get a lead' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many leads' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many leads' },
 					{ name: 'Merge', value: 'merge', action: 'Merge leads' },
 					{ name: 'Search', value: 'search', action: 'Search leads' },
 					{ name: 'Update', value: 'update', action: 'Update a lead' },
@@ -121,7 +124,8 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['lead'], operation: ['create', 'update'] } },
 				options: [
 					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
-					{ displayName: 'Status', name: 'status_id', type: 'options', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
+					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
+																																																	description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
 					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
 				],
 			},
@@ -138,6 +142,7 @@ export class Close implements INodeType {
 				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
+				description: 'Whether to return all results or only up to a given limit',
 				default: false,
 				displayOptions: { show: { resource: ['lead'], operation: ['getAll', 'search'] } },
 			},
@@ -145,6 +150,7 @@ export class Close implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
+				description: 'Max number of results to return',
 				default: 50,
 				typeOptions: { minValue: 1, maxValue: 200 },
 				displayOptions: { show: { resource: ['lead'], operation: ['getAll', 'search'], returnAll: [false] } },
@@ -161,7 +167,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a lead status' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a lead status' },
 					{ name: 'Get', value: 'get', action: 'Get a lead status' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many lead statuses' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many lead statuses' },
 					{ name: 'Update', value: 'update', action: 'Update a lead status' },
 				],
 				default: 'getAll',
@@ -194,7 +200,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a contact' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a contact' },
 					{ name: 'Get', value: 'get', action: 'Get a contact' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many contacts' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many contacts' },
 					{ name: 'Update', value: 'update', action: 'Update a contact' },
 				],
 				default: 'get',
@@ -239,6 +245,7 @@ export class Close implements INodeType {
 				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
+				description: 'Whether to return all results or only up to a given limit',
 				default: false,
 				displayOptions: { show: { resource: ['contact'], operation: ['getAll'] } },
 			},
@@ -246,6 +253,7 @@ export class Close implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
+				description: 'Max number of results to return',
 				default: 50,
 				typeOptions: { minValue: 1, maxValue: 200 },
 				displayOptions: { show: { resource: ['contact'], operation: ['getAll'], returnAll: [false] } },
@@ -262,7 +270,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create an opportunity' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an opportunity' },
 					{ name: 'Get', value: 'get', action: 'Get an opportunity' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many opportunities' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many opportunities' },
 					{ name: 'Update', value: 'update', action: 'Update an opportunity' },
 				],
 				default: 'get',
@@ -292,8 +300,9 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update'] } },
 				options: [
 					{ displayName: 'Note', name: 'note', type: 'string', default: '' },
-					{ displayName: 'Status', name: 'status_id', type: 'options', typeOptions: { loadOptionsMethod: 'getOpportunityStatuses' }, default: '' },
-					{ displayName: 'Value (in cents)', name: 'value', type: 'number', default: 0 },
+					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
+																																																	description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getOpportunityStatuses' }, default: '' },
+					{ displayName: 'Value (in Cents)', name: 'value', type: 'number', default: 0 },
 					{ displayName: 'Value Currency', name: 'value_currency', type: 'string', default: 'USD' },
 					{
 						displayName: 'Value Period',
@@ -313,6 +322,7 @@ export class Close implements INodeType {
 				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
+				description: 'Whether to return all results or only up to a given limit',
 				default: false,
 				displayOptions: { show: { resource: ['opportunity'], operation: ['getAll'] } },
 			},
@@ -320,6 +330,7 @@ export class Close implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
+				description: 'Max number of results to return',
 				default: 50,
 				typeOptions: { minValue: 1, maxValue: 200 },
 				displayOptions: { show: { resource: ['opportunity'], operation: ['getAll'], returnAll: [false] } },
@@ -336,7 +347,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create an opportunity status' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an opportunity status' },
 					{ name: 'Get', value: 'get', action: 'Get an opportunity status' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many opportunity statuses' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many opportunity statuses' },
 					{ name: 'Update', value: 'update', action: 'Update an opportunity status' },
 				],
 				default: 'getAll',
@@ -404,7 +415,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a pipeline' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a pipeline' },
 					{ name: 'Get', value: 'get', action: 'Get a pipeline' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many pipelines' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many pipelines' },
 					{ name: 'Update', value: 'update', action: 'Update a pipeline' },
 				],
 				default: 'getAll',
@@ -437,7 +448,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a task' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a task' },
 					{ name: 'Get', value: 'get', action: 'Get a task' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many tasks' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many tasks' },
 					{ name: 'Update', value: 'update', action: 'Update a task' },
 				],
 				default: 'get',
@@ -476,6 +487,7 @@ export class Close implements INodeType {
 				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
+				description: 'Whether to return all results or only up to a given limit',
 				default: false,
 				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
 			},
@@ -483,6 +495,7 @@ export class Close implements INodeType {
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
+				description: 'Max number of results to return',
 				default: 50,
 				typeOptions: { minValue: 1, maxValue: 200 },
 				displayOptions: { show: { resource: ['task'], operation: ['getAll'], returnAll: [false] } },
@@ -499,7 +512,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a note' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a note' },
 					{ name: 'Get', value: 'get', action: 'Get a note' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all notes for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many notes for a lead' },
 					{ name: 'Update', value: 'update', action: 'Update a note' },
 				],
 				default: 'getAll',
@@ -638,7 +651,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a call' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a call' },
 					{ name: 'Get', value: 'get', action: 'Get a call' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all calls for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many calls for a lead' },
 					{ name: 'Update', value: 'update', action: 'Update a call' },
 				],
 				default: 'getAll',
@@ -695,7 +708,7 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['call'], operation: ['create', 'update'] } },
 				options: [
 					{ displayName: 'Note', name: 'note', type: 'string', default: '', typeOptions: { rows: 3 } },
-					{ displayName: 'Duration (seconds)', name: 'duration', type: 'number', default: 0 },
+					{ displayName: 'Duration (Seconds)', name: 'duration', type: 'number', default: 0 },
 					{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
 					{ displayName: 'Contact ID', name: 'contact_id', type: 'string', default: '' },
 				],
@@ -749,7 +762,7 @@ export class Close implements INodeType {
 					{ name: 'Create (Send)', value: 'create', action: 'Send an email' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an email' },
 					{ name: 'Get', value: 'get', action: 'Get an email' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all emails for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many emails for a lead' },
 					{ name: 'Update', value: 'update', action: 'Update an email' },
 				],
 				default: 'getAll',
@@ -859,7 +872,7 @@ export class Close implements INodeType {
 					{ name: 'Create (Send)', value: 'create', action: 'Send an SMS' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an SMS' },
 					{ name: 'Get', value: 'get', action: 'Get an SMS' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all SMS messages for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many SMS messages for a lead' },
 					{ name: 'Update', value: 'update', action: 'Update an SMS' },
 				],
 				default: 'getAll',
@@ -951,7 +964,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a custom activity instance' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity instance' },
 					{ name: 'Get', value: 'get', action: 'Get a custom activity instance' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all custom activity instances for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many custom activity instances for a lead' },
 					{ name: 'Update', value: 'update', action: 'Update a custom activity instance' },
 				],
 				default: 'getAll',
@@ -973,9 +986,10 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'getAll'] } },
 			},
 			{
-				displayName: 'Activity Type',
+				displayName: 'Activity Type Name or ID',
 				name: 'activityTypeId',
 				type: 'options',
+				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: { loadOptionsMethod: 'getCustomActivityTypes' },
 				default: '',
 				required: true,
@@ -1061,7 +1075,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a custom activity type' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity type' },
 					{ name: 'Get', value: 'get', action: 'Get a custom activity type' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all custom activity types' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many custom activity types' },
 					{ name: 'Update', value: 'update', action: 'Update a custom activity type' },
 				],
 				default: 'getAll',
@@ -1115,7 +1129,7 @@ export class Close implements INodeType {
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a comment' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a comment' },
-					{ name: 'Get All', value: 'getAll', action: 'Get all comments for a lead' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many comments for a lead' },
 				],
 				default: 'getAll',
 			},
@@ -1155,7 +1169,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create an email template' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an email template' },
 					{ name: 'Get', value: 'get', action: 'Get an email template' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many email templates' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many email templates' },
 					{ name: 'Update', value: 'update', action: 'Update an email template' },
 				],
 				default: 'getAll',
@@ -1218,7 +1232,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a smart view' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a smart view' },
 					{ name: 'Get', value: 'get', action: 'Get a smart view' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many smart views' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many smart views' },
 					{ name: 'Get Leads', value: 'getLeads', action: 'Get leads from a smart view' },
 					{ name: 'Update', value: 'update', action: 'Update a smart view' },
 				],
@@ -1270,7 +1284,7 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['user'] } },
 				options: [
-					{ name: 'Get All', value: 'getAll', action: 'Get many users' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many users' },
 					{ name: 'Get Me', value: 'getMe', action: 'Get current user' },
 				],
 				default: 'getAll',
@@ -1287,7 +1301,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create a custom field' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a custom field' },
 					{ name: 'Get', value: 'get', action: 'Get a custom field' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many custom fields' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many custom fields' },
 					{ name: 'Update', value: 'update', action: 'Update a custom field' },
 				],
 				default: 'getAll',
@@ -1363,7 +1377,7 @@ export class Close implements INodeType {
 					{ name: 'Create', value: 'create', action: 'Create an integration link' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an integration link' },
 					{ name: 'Get', value: 'get', action: 'Get an integration link' },
-					{ name: 'Get All', value: 'getAll', action: 'Get many integration links' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many integration links' },
 					{ name: 'Update', value: 'update', action: 'Update an integration link' },
 				],
 				default: 'getAll',
@@ -1391,7 +1405,7 @@ export class Close implements INodeType {
 				default: '',
 				required: true,
 				displayOptions: { show: { resource: ['integrationLink'], operation: ['create'] } },
-				description: 'URL template for the integration link. Use {{lead.id}} etc. as placeholders.',
+				description: 'URL template for the integration link. Use {{lead.ID}} etc. as placeholders.',
 			},
 			{
 				displayName: 'Link Type',
@@ -1419,6 +1433,7 @@ export class Close implements INodeType {
 				],
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
@@ -1462,7 +1477,7 @@ export class Close implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				let responseData: any;
+				let responseData: IDataObject | IDataObject[] = [];
 
 				// ── LEAD ──────────────────────────────────────────────────────────────
 				if (resource === 'lead') {
@@ -1877,7 +1892,7 @@ export class Close implements INodeType {
 							_type: activityTypeId,
 						};
 						if (additionalFields.custom_fields_json) {
-							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
+							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
 						}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
 					} else if (operation === 'update') {
@@ -1886,7 +1901,7 @@ export class Close implements INodeType {
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
 						if (additionalFields.custom_fields_json) {
-							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch (_) {}
+							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
 					} else if (operation === 'delete') {
@@ -1947,23 +1962,7 @@ export class Close implements INodeType {
 					}
 				}
 
-				// ── LEAD STATUS ───────────────────────────────────────────────────────
-				else if (resource === 'leadStatus') {
-					const res = await closeApiRequest.call(this, 'GET', '/status/lead/');
-					responseData = res.data || [];
-				}
 
-				// ── OPPORTUNITY STATUS ────────────────────────────────────────────────
-				else if (resource === 'opportunityStatus') {
-					const res = await closeApiRequest.call(this, 'GET', '/status/opportunity/');
-					responseData = res.data || [];
-				}
-
-				// ── PIPELINE ──────────────────────────────────────────────────────────
-				else if (resource === 'pipeline') {
-					const res = await closeApiRequest.call(this, 'GET', '/pipeline/');
-					responseData = res.data || [];
-				}
 
 				// ── SMART VIEW ────────────────────────────────────────────────────────
 				else if (resource === 'smartView') {
@@ -1999,14 +1998,14 @@ export class Close implements INodeType {
 
 				// Normalize to array
 				const items2 = Array.isArray(responseData) ? responseData : [responseData];
-				returnData.push(...items2.map((item: any) => ({ json: item as IDataObject })));
+				returnData.push(...items2.map((item) => ({ json: item as IDataObject, pairedItem: { item: i } })));
 
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ json: { error: (error as Error).message } });
+					returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				throw error;
+				throw new NodeApiError(this.getNode(), error as JsonObject, { itemIndex: i });
 			}
 		}
 

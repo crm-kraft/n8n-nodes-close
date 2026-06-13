@@ -7,7 +7,11 @@ import {
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodePropertyOptions,
-} from 'n8n-workflow';
+		NodeOperationError,
+		NodeConnectionTypes,
+		NodeApiError,
+		JsonObject,
+	} from 'n8n-workflow';
 import { closeApiRequest } from '../Close/GenericFunctions';
 
 export class CloseTrigger implements INodeType {
@@ -17,6 +21,7 @@ export class CloseTrigger implements INodeType {
 		icon: 'file:close.svg',
 		group: ['trigger'],
 		version: 1,
+		subtitle: '={{$parameter["event"]}}',
 		description: 'Starts the workflow when Close CRM events occur',
 		codex: {
 			categories: ['Sales', 'CRM'],
@@ -29,7 +34,7 @@ export class CloseTrigger implements INodeType {
 			name: 'Close Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'closeApi',
@@ -115,13 +120,13 @@ export class CloseTrigger implements INodeType {
 				description: 'The Close CRM event to listen for',
 			},
 			{
-				displayName: 'Custom Activity Type',
+				displayName: 'Custom Activity Type Name or ID',
 				name: 'customActivityTypeId',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getCustomActivityTypes' },
 				required: true,
 				default: '',
-				description: 'The custom activity type to listen for published events on',
+				description: 'The custom activity type to listen for published events on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				displayOptions: {
 					show: {
 						event: [
@@ -134,6 +139,7 @@ export class CloseTrigger implements INodeType {
 				},
 			},
 		],
+		usableAsTool: true,
 	};
 
 	methods = {
@@ -338,11 +344,11 @@ export class CloseTrigger implements INodeType {
 							},
 						},
 					];
-				} else {
-					const mapped = eventMap[event];
-					if (!mapped) {
-						throw new Error(`Unknown event type: ${event}`);
-					}
+					} else {
+						const mapped = eventMap[event];
+						if (!mapped) {
+							throw new NodeOperationError(this.getNode(), `Unknown event type: ${event}`);
+						}
 					eventObjects = mapped;
 				}
 

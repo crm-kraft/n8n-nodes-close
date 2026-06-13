@@ -5,6 +5,8 @@ import {
 	IHttpRequestMethods,
 	IHttpRequestOptions,
 	IDataObject,
+	NodeApiError,
+	JsonObject,
 } from 'n8n-workflow';
 
 export async function closeApiRequest(
@@ -13,16 +15,11 @@ export async function closeApiRequest(
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
-): Promise<any> {
-	const credentials = await this.getCredentials('closeApi');
-
-	const options: IHttpRequestOptions = {
+): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+		const options: IHttpRequestOptions = {
 		method,
 		url: `https://api.close.com/api/v1${endpoint}`,
-		auth: {
-			username: credentials.apiKey as string,
-			password: '',
-		},
+
 		headers: {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
@@ -38,7 +35,11 @@ export async function closeApiRequest(
 		options.qs = qs;
 	}
 
-	return this.helpers.httpRequest(options);
+	try {
+		return await this.helpers.httpRequestWithAuthentication.call(this, 'closeApi', options);
+	} catch (error) {
+		throw new NodeApiError(this.getNode(), error as JsonObject);
+	}
 }
 
 export async function closeApiRequestAllItems(
@@ -47,8 +48,8 @@ export async function closeApiRequestAllItems(
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
-): Promise<any[]> {
-	const returnData: any[] = [];
+): Promise<any[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+	const returnData: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
 	let skip = 0;
 	const limit = 100;
 
