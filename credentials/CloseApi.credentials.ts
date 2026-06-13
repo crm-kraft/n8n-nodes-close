@@ -1,4 +1,10 @@
-import { ICredentialType, INodeProperties, Icon } from 'n8n-workflow';
+import {
+	IAuthenticateGeneric,
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+	Icon,
+} from 'n8n-workflow';
 
 export class CloseApi implements ICredentialType {
 	name = 'closeApi';
@@ -16,8 +22,8 @@ export class CloseApi implements ICredentialType {
 			description: 'Your Close.com API Key',
 		},
 	];
-	authenticate = {
-		type: 'generic' as const,
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
 		properties: {
 			auth: {
 				username: '={{$credentials.apiKey}}',
@@ -25,7 +31,7 @@ export class CloseApi implements ICredentialType {
 			},
 		},
 	};
-	test = {
+	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.close.com',
 			url: '/api/v1/me/',
