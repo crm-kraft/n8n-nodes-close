@@ -1215,10 +1215,32 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['user'] } },
 				options: [
-					{ name: 'Get Many', value: 'getAll', action: 'Get many users' },
-					{ name: 'Get Me', value: 'getMe', action: 'Get current user' },
-				],
+									{ name: 'Get Many', value: 'getAll', action: 'Get many users' },
+				{ name: 'Get Me', value: 'getMe', action: 'Get current user' },
+			],
 				default: 'getAll',
+			},
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['user'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Status',
+						name: 'is_active',
+						type: 'options',
+						default: '',
+						options: [
+							{ name: 'All', value: '' },
+							{ name: 'Active', value: 'true' },
+							{ name: 'Inactive', value: 'false' },
+						],
+						description: 'Filter users by active/inactive status',
+					},
+				],
 			},
 
 			// ─── CUSTOM FIELD ─────────────────────────────────────────────────────────
@@ -1898,9 +1920,12 @@ export class Close implements INodeType {
 
 				// ── USER ──────────────────────────────────────────────────────────────
 				else if (resource === 'user') {
-					if (operation === 'getAll') {
-						const res = await closeApiRequest.call(this, 'GET', '/user/');
-						responseData = res.data || [];
+				if (operation === 'getAll') {
+					const filters = this.getNodeParameter('filters', i, {}) as IDataObject;
+					const qs: IDataObject = {};
+					if (filters.is_active !== '' && filters.is_active !== undefined) qs.is_active = filters.is_active;
+					const res = await closeApiRequest.call(this, 'GET', '/user/', {}, qs);
+					responseData = res.data || [];
 					} else if (operation === 'getMe') {
 						responseData = await closeApiRequest.call(this, 'GET', '/me/');
 					}
