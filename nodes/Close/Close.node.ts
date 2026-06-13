@@ -624,20 +624,6 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return activities created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Activity Date After',
-						name: 'activity_at__gt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred after this date/time (exclusive)',
-					},
-					{
-						displayName: 'Activity Date Before',
-						name: 'activity_at__lt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred before this date/time (exclusive)',
-					},
 				],
 			},
 			// ─── CALL ─────────────────────────────────────────────────────────────────
@@ -735,20 +721,6 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return activities created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Activity Date After',
-						name: 'activity_at__gt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred after this date/time (exclusive)',
-					},
-					{
-						displayName: 'Activity Date Before',
-						name: 'activity_at__lt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred before this date/time (exclusive)',
-					},
 				],
 			},
 			// ─── EMAIL ────────────────────────────────────────────────────────────────
@@ -845,20 +817,6 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return activities created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Activity Date After',
-						name: 'activity_at__gt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred after this date/time (exclusive)',
-					},
-					{
-						displayName: 'Activity Date Before',
-						name: 'activity_at__lt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred before this date/time (exclusive)',
-					},
 				],
 			},
 			// ─── SMS ──────────────────────────────────────────────────────────────────
@@ -937,20 +895,6 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return activities created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Activity Date After',
-						name: 'activity_at__gt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred after this date/time (exclusive)',
-					},
-					{
-						displayName: 'Activity Date Before',
-						name: 'activity_at__lt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return activities that occurred before this date/time (exclusive)',
-					},
 				],
 			},
 			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
@@ -1024,20 +968,7 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return instances created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Activity Date After',
-						name: 'activity_at__gt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return instances that occurred after this date/time (exclusive)',
-					},
-					{
-						displayName: 'Activity Date Before',
-						name: 'activity_at__lt',
-						type: 'dateTime',
-						default: '',
-						description: 'Return instances that occurred before this date/time (exclusive)',
-					},
+
 				],
 			},
 			{
@@ -1740,8 +1671,6 @@ export class Close implements INodeType {
 						const qs: IDataObject = { lead_id: leadId };
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
-						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
@@ -1778,8 +1707,6 @@ export class Close implements INodeType {
 						const qs: IDataObject = { lead_id: leadId };
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
-						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
@@ -1821,8 +1748,6 @@ export class Close implements INodeType {
 						const qs: IDataObject = { lead_id: leadId };
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
-						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
@@ -1852,8 +1777,6 @@ export class Close implements INodeType {
 						const qs: IDataObject = { lead_id: leadId };
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
-						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
@@ -1878,8 +1801,6 @@ export class Close implements INodeType {
 						if (filters.custom_activity_type_id) qs.custom_activity_type_id = filters.custom_activity_type_id;
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
-						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/custom/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'create') {
