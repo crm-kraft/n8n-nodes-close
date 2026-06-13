@@ -1718,7 +1718,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 						if (v !== null && v !== undefined && v !== '') {
-							body[k] = v;
+							body[`custom.${k}`] = v;
 						}
 					}
 					// Inline contact creation
@@ -1744,7 +1744,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 												if (v !== null && v !== undefined && v !== '') {
-													body[k] = v;
+													body[`custom.${k}`] = v;
 												}
 											}
 					responseData = await closeApiRequest.call(this, 'PUT', `/lead/${leadId}/`, body);
@@ -1816,7 +1816,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 												if (v !== null && v !== undefined && v !== '') {
-													body[k] = v;
+													body[`custom.${k}`] = v;
 												}
 											}
 					responseData = await closeApiRequest.call(this, 'POST', '/contact/', body);
@@ -1837,7 +1837,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 												if (v !== null && v !== undefined && v !== '') {
-													body[k] = v;
+													body[`custom.${k}`] = v;
 												}
 											}
 					responseData = await closeApiRequest.call(this, 'PUT', `/contact/${contactId}/`, body);
@@ -1870,7 +1870,7 @@ export class Close implements INodeType {
 				const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 				for (const [k, v] of Object.entries(cfValue)) {
 										if (v !== null && v !== undefined && v !== '') {
-											body[k] = v;
+											body[`custom.${k}`] = v;
 										}
 									}
 				responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
@@ -2171,7 +2171,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 												if (v !== null && v !== undefined && v !== '') {
-													body[k] = v;
+													body[`custom.${k}`] = v;
 												}
 											}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
@@ -2184,7 +2184,7 @@ export class Close implements INodeType {
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
 												if (v !== null && v !== undefined && v !== '') {
-													body[k] = v;
+													body[`custom.${k}`] = v;
 												}
 											}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
