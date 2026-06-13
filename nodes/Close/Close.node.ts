@@ -2247,10 +2247,34 @@ export class Close implements INodeType {
 				else if (resource === 'user') {
 				if (operation === 'getAll') {
 					const filters = this.getNodeParameter('filters', i, {}) as IDataObject;
-					const qs: IDataObject = {};
-					if (filters.is_active !== '' && filters.is_active !== undefined) qs.is_active = filters.is_active;
-					const res = await closeApiRequest.call(this, 'GET', '/user/', {}, qs);
-					responseData = res.data || [];
+					const statusFilter = filters.is_active as string | undefined;
+					// The Close API /user/ endpoint only returns active org members.
+					// Inactive users are stored in org.inactive_memberships.
+					if (statusFilter === 'false') {
+						// Inactive users: fetch from organization.inactive_memberships
+						const me = await closeApiRequest.call(this, 'GET', '/me/');
+						const orgIds: string[] = me.organizations || [];
+						const inactiveUsers: IDataObject[] = [];
+						for (const orgId of orgIds) {
+							const org = await closeApiRequest.call(this, 'GET', `/organization/${orgId}/`, {}, { _fields: 'inactive_memberships' });
+							const inactiveMembers = (org.inactive_memberships || []) as IDataObject[];
+							for (const m of inactiveMembers) {
+								inactiveUsers.push({
+									id: m.user_id,
+									first_name: m.user_first_name,
+									last_name: m.user_last_name,
+									email: m.user_email,
+									image: m.user_image,
+									is_active: false,
+								});
+							}
+						}
+						responseData = inactiveUsers;
+					} else {
+						// Active or All: /user/ endpoint returns only active members
+						const res = await closeApiRequest.call(this, 'GET', '/user/');
+						responseData = res.data || [];
+					}
 					} else if (operation === 'getMe') {
 						responseData = await closeApiRequest.call(this, 'GET', '/me/');
 					}
