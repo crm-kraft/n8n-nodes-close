@@ -1715,14 +1715,10 @@ export class Close implements INodeType {
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					// DEBUG: expose cfMapper contents
-					throw new NodeOperationError(this.getNode(), `DEBUG cfMapper=${JSON.stringify(cfMapper)} cfValue=${JSON.stringify(cfValue)}`, { itemIndex: i });
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+						if (v !== null && v !== undefined && v !== '') {
+							body[k] = v;
 						}
 					}
 					// Inline contact creation
@@ -1745,14 +1741,12 @@ export class Close implements INodeType {
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
-						}
-					}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+												if (v !== null && v !== undefined && v !== '') {
+													body[k] = v;
+												}
+											}
 					responseData = await closeApiRequest.call(this, 'PUT', `/lead/${leadId}/`, body);
 					} else if (operation === 'delete') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
@@ -1819,14 +1813,12 @@ export class Close implements INodeType {
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
-						}
-					}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+												if (v !== null && v !== undefined && v !== '') {
+													body[k] = v;
+												}
+											}
 					responseData = await closeApiRequest.call(this, 'POST', '/contact/', body);
 				} else if (operation === 'update') {
 					const contactId = this.getNodeParameter('contactId', i) as string;
@@ -1842,14 +1834,12 @@ export class Close implements INodeType {
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
-						}
-					}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+												if (v !== null && v !== undefined && v !== '') {
+													body[k] = v;
+												}
+											}
 					responseData = await closeApiRequest.call(this, 'PUT', `/contact/${contactId}/`, body);
 					} else if (operation === 'delete') {
 						const contactId = this.getNodeParameter('contactId', i) as string;
@@ -1877,14 +1867,12 @@ export class Close implements INodeType {
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const body: IDataObject = { lead_id: leadId, ...additionalFields };
 				const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-				const cfValue = cfMapper?.value as IDataObject | null;
-				if (cfValue) {
-					for (const [k, v] of Object.entries(cfValue)) {
-						if (v !== null && v !== undefined && v !== '') {
-							body[k] = v;
-						}
-					}
-				}
+				const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+				for (const [k, v] of Object.entries(cfValue)) {
+										if (v !== null && v !== undefined && v !== '') {
+											body[k] = v;
+										}
+									}
 				responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
 				} else if (operation === 'update') {
 					const opportunityId = this.getNodeParameter('opportunityId', i) as string;
@@ -2180,14 +2168,12 @@ export class Close implements INodeType {
 							_type: activityTypeId,
 						};
 						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
-						}
-					}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+												if (v !== null && v !== undefined && v !== '') {
+													body[k] = v;
+												}
+											}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
 					} else if (operation === 'update') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
@@ -2195,14 +2181,12 @@ export class Close implements INodeType {
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
 						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
-					const cfValue = cfMapper?.value as IDataObject | null;
-					if (cfValue) {
-						for (const [k, v] of Object.entries(cfValue)) {
-							if (v !== null && v !== undefined && v !== '') {
-								body[k] = v;
-							}
-						}
-					}
+					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+					for (const [k, v] of Object.entries(cfValue)) {
+												if (v !== null && v !== undefined && v !== '') {
+													body[k] = v;
+												}
+											}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
 					} else if (operation === 'delete') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
