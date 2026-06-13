@@ -1,0 +1,78 @@
+{
+	"name": "@crm-kraft/n8n-nodes-close",
+	"version": "2.0.7",
+	"description": "The most complete Close CRM node for n8n. Manage leads, contacts, opportunities, tasks, calls, emails, and more. Includes a full webhook trigger node with all events — Lead Created/Updated, Opportunity Won, Custom Activity Published, and every Zapier-equivalent trigger. Maintained by CRM Kraft, a Close CRM specialist with 130+ implementations.",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"close",
+		"crm",
+		"close.com",
+		"closecrm",
+		"close-crm",
+		"automation",
+		"webhook",
+		"trigger",
+		"lead",
+		"contact",
+		"opportunity",
+		"sales",
+		"sales-automation",
+		"crm-automation",
+		"workflow",
+		"integration",
+		"custom-activity",
+		"n8n-nodes"
+	],
+	"license": "MIT",
+	"author": {
+		"name": "CRM Kraft"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/crm-kraft/n8n-nodes-close.git"
+	},
+	"homepage": "https://github.com/crm-kraft/n8n-nodes-close#readme",
+	"bugs": {
+		"url": "https://github.com/crm-kraft/n8n-nodes-close/issues"
+	},
+	"main": "index.js",
+	"scripts": {
+		"build": "tsc && npm run copy-icons",
+		"copy-icons": "copyfiles -u 2 \"nodes/Close/*.svg\" dist/nodes/ && cp dist/nodes/close.svg dist/nodes/Close/close.svg && cp dist/nodes/close.svg dist/nodes/CloseTrigger/close.svg",
+		"dev": "tsc --watch",
+		"format": "prettier nodes credentials --write",
+		"lint": "eslint nodes credentials package.json",
+		"lint:fix": "eslint nodes credentials package.json --fix",
+		"prepublishOnly": "npm run build",
+		"typecheck": "tsc --noEmit"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": [
+			"dist/credentials/CloseApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Close/Close.node.js",
+			"dist/nodes/CloseTrigger/CloseTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.5",
+		"@typescript-eslint/eslint-plugin": "^6.19.0",
+		"@typescript-eslint/parser": "^6.19.0",
+		"copyfiles": "^2.4.1",
+		"eslint": "^8.56.0",
+		"eslint-plugin-n8n-nodes-base": "^1.16.2",
+		"n8n-workflow": "^1.24.0",
+		"prettier": "^3.2.4",
+		"typescript": "^5.3.3"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
