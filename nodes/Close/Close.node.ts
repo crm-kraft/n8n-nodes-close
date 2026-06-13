@@ -127,13 +127,36 @@ export class Close implements INodeType {
 					{ displayName: 'Contact Name', name: 'contact_name', type: 'string', default: '', description: 'Full name of the primary contact (creates a contact on the lead)' },
 					{ displayName: 'Contact Phone', name: 'contact_phone', type: 'string', default: '', description: 'Phone number of the primary contact (creates a contact on the lead)' },
 					{
-						displayName: 'Custom Fields (JSON)',
-						name: 'custom_fields_json',
-						type: 'string',
-						default: '',
-						description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
-						typeOptions: { rows: 3 },
-					},
+					displayName: 'Custom Fields',
+					name: 'customFields',
+					type: 'fixedCollection',
+					typeOptions: { multipleValues: true },
+					placeholder: 'Add Custom Field',
+					default: {},
+					description: 'Add custom field values by key and value',
+					options: [
+						{
+							name: 'customFieldValues',
+							displayName: 'Custom Field',
+							values: [
+								{
+									displayName: 'Field Key',
+									name: 'key',
+									type: 'string',
+									default: '',
+									description: 'The custom field key, e.g. cf_abc123',
+								},
+								{
+									displayName: 'Value',
+									name: 'value',
+									type: 'string',
+									default: '',
+									description: 'The value to set for this custom field',
+								},
+							],
+						},
+					],
+				},
 					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
 																																		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
@@ -249,13 +272,36 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
 				options: [
 					{
-						displayName: 'Custom Fields (JSON)',
-						name: 'custom_fields_json',
-						type: 'string',
-						default: '',
-						description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
-						typeOptions: { rows: 3 },
-					},
+					displayName: 'Custom Fields',
+					name: 'customFields',
+					type: 'fixedCollection',
+					typeOptions: { multipleValues: true },
+					placeholder: 'Add Custom Field',
+					default: {},
+					description: 'Add custom field values by key and value',
+					options: [
+						{
+							name: 'customFieldValues',
+							displayName: 'Custom Field',
+							values: [
+								{
+									displayName: 'Field Key',
+									name: 'key',
+									type: 'string',
+									default: '',
+									description: 'The custom field key, e.g. cf_abc123',
+								},
+								{
+									displayName: 'Value',
+									name: 'value',
+									type: 'string',
+									default: '',
+									description: 'The value to set for this custom field',
+								},
+							],
+						},
+					],
+				},
 					{
 						displayName: 'Email Addresses',
 						name: 'emails',
@@ -378,12 +424,35 @@ export class Close implements INodeType {
 					},
 					{ displayName: 'Close Date', name: 'date_won', type: 'string', default: '' },
 				{
-					displayName: 'Custom Fields (JSON)',
-					name: 'custom_fields_json',
-					type: 'string',
-					default: '',
-					description: 'JSON object of custom field key-value pairs, e.g. {"cf_abc123": "value"}',
-					typeOptions: { rows: 3 },
+					displayName: 'Custom Fields',
+					name: 'customFields',
+					type: 'fixedCollection',
+					typeOptions: { multipleValues: true },
+					placeholder: 'Add Custom Field',
+					default: {},
+					description: 'Add custom field values by key and value',
+					options: [
+						{
+							name: 'customFieldValues',
+							displayName: 'Custom Field',
+							values: [
+								{
+									displayName: 'Field Key',
+									name: 'key',
+									type: 'string',
+									default: '',
+									description: 'The custom field key, e.g. cf_abc123',
+								},
+								{
+									displayName: 'Value',
+									name: 'value',
+									type: 'string',
+									default: '',
+									description: 'The value to set for this custom field',
+								},
+							],
+						},
+					],
 				},
 				],
 			},
@@ -1056,11 +1125,35 @@ export class Close implements INodeType {
 						description: 'When the activity occurred (defaults to now)',
 					},
 					{
-						displayName: 'Custom Fields (JSON)',
-						name: 'custom_fields_json',
-						type: 'string',
-						default: '',
-						description: 'JSON object of custom field ID to value pairs, e.g. {"cf_abc123": "value"}',
+						displayName: 'Custom Fields',
+						name: 'customFields',
+						type: 'fixedCollection',
+						typeOptions: { multipleValues: true },
+						placeholder: 'Add Custom Field',
+						default: {},
+						description: 'Add custom field values by key and value',
+						options: [
+							{
+								name: 'customFieldValues',
+								displayName: 'Custom Field',
+								values: [
+									{
+										displayName: 'Field Key',
+										name: 'key',
+										type: 'string',
+										default: '',
+										description: 'The custom field key, e.g. cf_abc123',
+									},
+									{
+										displayName: 'Value',
+										name: 'value',
+										type: 'string',
+										default: '',
+										description: 'The value to set for this custom field',
+									},
+								],
+							},
+						],
 					},
 				],
 			},
@@ -1532,8 +1625,11 @@ export class Close implements INodeType {
 					if (additionalFields.description) body.description = additionalFields.description;
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
-					if (additionalFields.custom_fields_json) {
-						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
+						}
 					}
 					// Inline contact creation
 					const contactName = additionalFields.contact_name as string | undefined;
@@ -1554,8 +1650,11 @@ export class Close implements INodeType {
 					if (additionalFields.description) body.description = additionalFields.description;
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
-					if (additionalFields.custom_fields_json) {
-						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
+						}
 					}
 					responseData = await closeApiRequest.call(this, 'PUT', `/lead/${leadId}/`, body);
 					} else if (operation === 'delete') {
@@ -1622,8 +1721,11 @@ export class Close implements INodeType {
 						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
-					if (additionalFields.custom_fields_json) {
-						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
+						}
 					}
 					responseData = await closeApiRequest.call(this, 'POST', '/contact/', body);
 				} else if (operation === 'update') {
@@ -1639,8 +1741,11 @@ export class Close implements INodeType {
 						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
 						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
 					}
-					if (additionalFields.custom_fields_json) {
-						try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+					if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
+						}
 					}
 					responseData = await closeApiRequest.call(this, 'PUT', `/contact/${contactId}/`, body);
 					} else if (operation === 'delete') {
@@ -1667,19 +1772,25 @@ export class Close implements INodeType {
 					} else if (operation === 'create') {
 					const leadId = this.getNodeParameter('leadId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-					const { custom_fields_json: oppCfJson, ...oppFields } = additionalFields;
+					const { customFields: oppCf, ...oppFields } = additionalFields;
 					const body: IDataObject = { lead_id: leadId, ...oppFields };
-					if (oppCfJson) {
-						try { Object.assign(body, JSON.parse(oppCfJson as string)); } catch { /* ignore */ }
+					if (oppCf) {
+						const cfItems = (oppCf as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
+						}
 					}
 					responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', body);
 				} else if (operation === 'update') {
 					const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-					const { custom_fields_json: oppUpdCfJson, ...oppUpdFields } = additionalFields;
+					const { customFields: oppUpdCf, ...oppUpdFields } = additionalFields;
 					const updBody: IDataObject = { ...oppUpdFields };
-					if (oppUpdCfJson) {
-						try { Object.assign(updBody, JSON.parse(oppUpdCfJson as string)); } catch { /* ignore */ }
+					if (oppUpdCf) {
+						const cfItems = (oppUpdCf as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) updBody[cf.key as string] = cf.value;
+						}
 					}
 					responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
 					} else if (operation === 'delete') {
@@ -1961,18 +2072,24 @@ export class Close implements INodeType {
 							lead_id: leadId,
 							_type: activityTypeId,
 						};
-						if (additionalFields.custom_fields_json) {
-							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+						if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
 						}
+					}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
 					} else if (operation === 'update') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
-						if (additionalFields.custom_fields_json) {
-							try { Object.assign(body, JSON.parse(additionalFields.custom_fields_json as string)); } catch { /* ignore */ }
+						if (additionalFields.customFields) {
+						const cfItems = (additionalFields.customFields as IDataObject).customFieldValues as IDataObject[] || [];
+						for (const cf of cfItems) {
+							if (cf.key) body[cf.key as string] = cf.value;
 						}
+					}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
 					} else if (operation === 'delete') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
