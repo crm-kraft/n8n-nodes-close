@@ -555,13 +555,34 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['activity'], operation: ['createNote'] } },
 			},
 			{
+				displayName: 'Attachment Source',
+				name: 'attachmentSource',
+				type: 'options',
+				options: [
+					{ name: 'URL', value: 'url' },
+					{ name: 'Binary Data', value: 'binary' },
+				],
+				default: 'url',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true] } },
+			},
+			{
+				displayName: 'File URL',
+				name: 'fileUrl',
+				type: 'string',
+				default: '',
+				required: true,
+				placeholder: 'https://example.com/document.pdf',
+				description: 'URL of the file to download and attach to the note',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true], attachmentSource: ['url'] } },
+			},
+			{
 				displayName: 'Binary Property',
 				name: 'binaryPropertyName',
 				type: 'string',
 				default: 'data',
 				required: true,
 				description: 'Name of the binary property containing the file to attach',
-				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true] } },
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true], attachmentSource: ['binary'] } },
 			},
 			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
 			{
@@ -1212,10 +1233,35 @@ export class Close implements INodeType {
 
 						// Handle file attachment via Close Files API
 						if (attachFile) {
-							const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
-							const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
-							const filename = binaryData.fileName || 'attachment';
-							const contentType = binaryData.mimeType || 'application/octet-stream';
+							const attachmentSource = this.getNodeParameter('attachmentSource', i) as string;
+							let fileBuffer: Buffer;
+							let filename: string;
+							let contentType: string;
+
+							if (attachmentSource === 'url') {
+								// Download file from URL
+								const fileUrl = this.getNodeParameter('fileUrl', i) as string;
+								const urlResponse = await this.helpers.httpRequest({
+									method: 'GET',
+									url: fileUrl,
+									encoding: 'arraybuffer',
+									returnFullResponse: true,
+								});
+								fileBuffer = Buffer.from(urlResponse.body as ArrayBuffer);
+								// Extract filename from URL path
+								const urlPath = new URL(fileUrl).pathname;
+								filename = urlPath.split('/').pop() || 'attachment';
+								// Determine content type from response headers or filename extension
+								const respContentType = (urlResponse.headers?.['content-type'] as string) || '';
+								contentType = respContentType.split(';')[0].trim() || 'application/octet-stream';
+							} else {
+								// Use binary data from input
+								const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+								const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+								filename = binaryData.fileName || 'attachment';
+								contentType = binaryData.mimeType || 'application/octet-stream';
+								fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+							}
 
 							// Step 1: Get S3 upload URL from Close
 							const uploadMeta = await closeApiRequest.call(this, 'POST', '/files/upload/', {
@@ -1224,7 +1270,6 @@ export class Close implements INodeType {
 							});
 
 							// Step 2: Upload file to S3 using FormData
-							const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
 							const s3Form = new FormData();
 							// Add all S3 policy fields first
 							for (const [key, value] of Object.entries(uploadMeta.upload.fields as Record<string, string>)) {
