@@ -7,6 +7,7 @@ import {
 	INodeTypeDescription,
 	IDataObject,
 	NodeOperationError,
+	IHttpRequestOptions,
 } from 'n8n-workflow';
 import { closeApiRequest, closeApiRequestAllItems } from './GenericFunctions';
 
@@ -515,14 +516,53 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['activity'], operation: ['createNote', 'getAll'] } },
 			},
 			{
+				displayName: 'Note Type',
+				name: 'noteType',
+				type: 'options',
+				options: [
+					{ name: 'Plain Text', value: 'plain' },
+					{ name: 'Rich Text (HTML)', value: 'html' },
+				],
+				default: 'plain',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'] } },
+			},
+			{
 				displayName: 'Note',
 				name: 'note',
 				type: 'string',
+				typeOptions: { rows: 4 },
 				default: '',
 				required: true,
+				description: 'Plain text content of the note',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], noteType: ['plain'] } },
+			},
+			{
+				displayName: 'Note HTML',
+				name: 'noteHtml',
+				type: 'string',
+				typeOptions: { rows: 6 },
+				default: '<body><p></p></body>',
+				required: true,
+				description: 'Rich text HTML content. Must be wrapped in &lt;body&gt;&lt;/body&gt; tags. Supports &lt;p&gt;, &lt;h1&gt;-&lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;, &lt;img&gt;, etc.',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], noteType: ['html'] } },
+			},
+			{
+				displayName: 'Attach File',
+				name: 'attachFile',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to attach a binary file to this note',
 				displayOptions: { show: { resource: ['activity'], operation: ['createNote'] } },
 			},
-
+			{
+				displayName: 'Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				description: 'Name of the binary property containing the file to attach',
+				displayOptions: { show: { resource: ['activity'], operation: ['createNote'], attachFile: [true] } },
+			},
 			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
@@ -1159,8 +1199,56 @@ export class Close implements INodeType {
 				else if (resource === 'activity') {
 					if (operation === 'createNote') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
-						const note = this.getNodeParameter('note', i) as string;
-						responseData = await closeApiRequest.call(this, 'POST', '/activity/note/', { lead_id: leadId, note });
+						const noteType = this.getNodeParameter('noteType', i) as string;
+						const attachFile = this.getNodeParameter('attachFile', i) as boolean;
+
+						// Build note body
+						const noteBody: IDataObject = { lead_id: leadId };
+						if (noteType === 'html') {
+							noteBody.note_html = this.getNodeParameter('noteHtml', i) as string;
+						} else {
+							noteBody.note = this.getNodeParameter('note', i) as string;
+						}
+
+						// Handle file attachment via Close Files API
+						if (attachFile) {
+							const binaryPropertyName = this.getNodeParameter('binaryPropertyName', i) as string;
+							const binaryData = this.helpers.assertBinaryData(i, binaryPropertyName);
+							const filename = binaryData.fileName || 'attachment';
+							const contentType = binaryData.mimeType || 'application/octet-stream';
+
+							// Step 1: Get S3 upload URL from Close
+							const uploadMeta = await closeApiRequest.call(this, 'POST', '/files/upload/', {
+								filename,
+								content_type: contentType,
+							});
+
+							// Step 2: Upload file to S3 using FormData
+							const fileBuffer = await this.helpers.getBinaryDataBuffer(i, binaryPropertyName);
+							const s3Form = new FormData();
+							// Add all S3 policy fields first
+							for (const [key, value] of Object.entries(uploadMeta.upload.fields as Record<string, string>)) {
+								s3Form.append(key, value);
+							}
+							// File must be last
+							s3Form.append('file', new Blob([fileBuffer], { type: contentType }), filename);
+							const s3Options: IHttpRequestOptions = {
+								method: 'POST',
+								url: uploadMeta.upload.url,
+								body: s3Form,
+								ignoreHttpStatusErrors: true,
+							};
+							await this.helpers.httpRequest(s3Options);
+
+							// Step 3: Attach the uploaded file URL to the note
+							noteBody.attachments = [{
+								url: uploadMeta.download.url,
+								filename,
+								content_type: contentType,
+							}];
+						}
+
+						responseData = await closeApiRequest.call(this, 'POST', '/activity/note/', noteBody);
 					} else if (operation === 'get') {
 						const activityId = this.getNodeParameter('activityId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/${activityId}/`);
