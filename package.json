@@ -1,7 +1,7 @@
 {
 	"name": "@crm-kraft/n8n-nodes-close",
-	"version": "2.0.7",
-	"description": "The most complete Close CRM node for n8n. Manage leads, contacts, opportunities, tasks, calls, emails, and more. Includes a full webhook trigger node with all events — Lead Created/Updated, Opportunity Won, Custom Activity Published, and every Zapier-equivalent trigger. Maintained by CRM Kraft, a Close CRM specialist with 130+ implementations.",
+	"version": "2.1.0",
+	"description": "The most complete Close CRM node for n8n. 71 operations across 15 resources: leads (with merge), contacts, opportunities, tasks, activities, custom activities, comments, email templates, smart views (full CRUD), pipelines, lead statuses, opportunity statuses, custom fields, integration links, and users. Includes a full webhook trigger node. Maintained by CRM Kraft, a Close CRM specialist with 130+ implementations.",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
