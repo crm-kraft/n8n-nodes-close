@@ -588,6 +588,44 @@ export class Close implements INodeType {
 				description: 'Name of the binary property containing the file to attach',
 				displayOptions: { show: { resource: ['note'], operation: ['create'], attachFile: [true], attachmentSource: ['binary'] } },
 			},
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['note'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created before this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date After',
+						name: 'activity_at__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date Before',
+						name: 'activity_at__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred before this date/time (exclusive)',
+					},
+				],
+			},
 			// ─── CALL ─────────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
@@ -659,6 +697,44 @@ export class Close implements INodeType {
 					{ displayName: 'Duration (seconds)', name: 'duration', type: 'number', default: 0 },
 					{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
 					{ displayName: 'Contact ID', name: 'contact_id', type: 'string', default: '' },
+				],
+			},
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['call'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created before this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date After',
+						name: 'activity_at__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date Before',
+						name: 'activity_at__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred before this date/time (exclusive)',
+					},
 				],
 			},
 			// ─── EMAIL ────────────────────────────────────────────────────────────────
@@ -733,6 +809,44 @@ export class Close implements INodeType {
 					{ displayName: 'Template ID', name: 'template_id', type: 'string', default: '' },
 				],
 			},
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['email'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created before this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date After',
+						name: 'activity_at__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date Before',
+						name: 'activity_at__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred before this date/time (exclusive)',
+					},
+				],
+			},
 			// ─── SMS ──────────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
@@ -785,6 +899,44 @@ export class Close implements INodeType {
 					{ displayName: 'Contact ID', name: 'contact_id', type: 'string', default: '' },
 					{ displayName: 'Phone', name: 'remote_phone', type: 'string', default: '' },
 					{ displayName: 'Local Phone', name: 'local_phone', type: 'string', default: '' },
+				],
+			},
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['sms'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities created before this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date After',
+						name: 'activity_at__gt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred after this date/time (exclusive)',
+					},
+					{
+						displayName: 'Activity Date Before',
+						name: 'activity_at__lt',
+						type: 'dateTime',
+						default: '',
+						description: 'Return activities that occurred before this date/time (exclusive)',
+					},
 				],
 			},
 			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
@@ -1471,7 +1623,13 @@ export class Close implements INodeType {
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/note/${noteId}/`);
 					} else if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, { lead_id: leadId });
+						const filters = this.getNodeParameter('filters', i) as IDataObject;
+						const qs: IDataObject = { lead_id: leadId };
+						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
+						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
 						const noteId = this.getNodeParameter('noteId', i) as string;
@@ -1503,7 +1661,13 @@ export class Close implements INodeType {
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/call/${callId}/`);
 					} else if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('callLeadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, { lead_id: leadId });
+						const filters = this.getNodeParameter('filters', i) as IDataObject;
+						const qs: IDataObject = { lead_id: leadId };
+						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
+						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
 						const callId = this.getNodeParameter('callId', i) as string;
@@ -1540,7 +1704,13 @@ export class Close implements INodeType {
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/email/${emailId}/`);
 					} else if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('emailLeadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, { lead_id: leadId });
+						const filters = this.getNodeParameter('filters', i) as IDataObject;
+						const qs: IDataObject = { lead_id: leadId };
+						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
+						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
@@ -1565,7 +1735,13 @@ export class Close implements INodeType {
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/sms/${smsId}/`);
 					} else if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('smsLeadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, { lead_id: leadId });
+						const filters = this.getNodeParameter('filters', i) as IDataObject;
+						const qs: IDataObject = { lead_id: leadId };
+						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+						if (filters.activity_at__gt) qs.activity_at__gt = filters.activity_at__gt;
+						if (filters.activity_at__lt) qs.activity_at__lt = filters.activity_at__lt;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, qs);
 						responseData = res.data || [];
 					} else if (operation === 'update') {
 						const smsId = this.getNodeParameter('smsId', i) as string;
