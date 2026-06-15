@@ -1170,6 +1170,7 @@ export class Close implements INodeType {
 					required: false,
 					displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
 					typeOptions: {
+						loadOptionsDependsOn: ['activityTypeId'],
 						resourceMapper: {
 							resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
 							mode: 'add',
