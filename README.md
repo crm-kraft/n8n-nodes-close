@@ -62,10 +62,10 @@ Perform operations on all major Close CRM resources.
 | **Pipeline** | Get, Get All |
 | **Lead Status** | Get, Get All |
 | **Opportunity Status** | Get, Get All |
-| **Custom Field** | Get, Get All |
-| **Smart View** | Get, Get All, Get Leads |
-| **Email Template** | Get, Get All |
-| **Integration Link** | Get, Get All |
+| **Custom Field** | Get Many |
+| **Smart View** | Get Many, Get Leads |
+| **Email Template** | Get, Get Many |
+| **Integration Link** | Create, Get, Get Many, Update, Delete |
 | **Custom Activity** | Create, Get, Get All, Update, Delete |
 | **Custom Activity Type** | Get, Get All |
 | **Comment** | Create, Get, Get All, Update, Delete |
