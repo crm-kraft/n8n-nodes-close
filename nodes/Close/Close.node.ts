@@ -1284,8 +1284,11 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['emailTemplate'] } },
 				options: [
+					{ name: 'Create', value: 'create', action: 'Create an email template' },
+					{ name: 'Delete', value: 'delete', action: 'Delete an email template' },
 					{ name: 'Get', value: 'get', action: 'Get an email template' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many email templates' },
+					{ name: 'Update', value: 'update', action: 'Update an email template' },
 				],
 				default: 'getAll',
 			},
@@ -1344,8 +1347,12 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['smartView'] } },
 				options: [
+					{ name: 'Create', value: 'create', action: 'Create a smart view' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a smart view' },
+					{ name: 'Get', value: 'get', action: 'Get a smart view' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many smart views' },
 					{ name: 'Get Leads', value: 'getLeads', action: 'Get leads from a smart view' },
+					{ name: 'Update', value: 'update', action: 'Update a smart view' },
 				],
 				default: 'getAll',
 			},
@@ -1431,7 +1438,11 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['customField'] } },
 				options: [
+					{ name: 'Create', value: 'create', action: 'Create a custom field' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a custom field' },
+					{ name: 'Get', value: 'get', action: 'Get a custom field' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many custom fields' },
+					{ name: 'Update', value: 'update', action: 'Update a custom field' },
 				],
 				default: 'getAll',
 			},
@@ -2247,6 +2258,23 @@ export class Close implements INodeType {
 					} else if (operation === 'getAll') {
 						const res = await closeApiRequest.call(this, 'GET', '/email_template/');
 						responseData = res.data || [];
+					} else if (operation === 'create') {
+						const name = this.getNodeParameter('name', i) as string;
+						const subject = this.getNodeParameter('subject', i) as string;
+						const body_html = this.getNodeParameter('body_html', i) as string;
+						responseData = await closeApiRequest.call(this, 'POST', '/email_template/', { name, subject, body: body_html });
+					} else if (operation === 'update') {
+						const templateId = this.getNodeParameter('templateId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = {};
+						if (additionalFields.name) body.name = additionalFields.name;
+						if (additionalFields.subject) body.subject = additionalFields.subject;
+						if (additionalFields.body_html) body.body = additionalFields.body_html;
+						responseData = await closeApiRequest.call(this, 'PUT', `/email_template/${templateId}/`, body);
+					} else if (operation === 'delete') {
+						const templateId = this.getNodeParameter('templateId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/email_template/${templateId}/`);
+						responseData = { success: true };
 					}
 				}
 
@@ -2257,9 +2285,39 @@ export class Close implements INodeType {
 					if (operation === 'getAll') {
 						const res = await closeApiRequest.call(this, 'GET', '/saved_search/');
 						responseData = res.data || [];
+					} else if (operation === 'get') {
+						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/saved_search/${smartViewId}/`);
 					} else if (operation === 'getLeads') {
 						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
 						responseData = await closeApiRequestAllItems.call(this, 'GET', '/lead/', {}, { saved_search_id: smartViewId });
+					} else if (operation === 'create') {
+						const name = this.getNodeParameter('name', i) as string;
+						const s_query_raw = this.getNodeParameter('s_query', i) as string;
+						let s_query: IDataObject;
+						try {
+							s_query = JSON.parse(s_query_raw);
+						} catch {
+							throw new Error('Query (JSON) must be valid JSON');
+						}
+						responseData = await closeApiRequest.call(this, 'POST', '/saved_search/', { name, s_query });
+					} else if (operation === 'update') {
+						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const body: IDataObject = {};
+						if (additionalFields.name) body.name = additionalFields.name;
+						if (additionalFields.s_query) {
+							try {
+								body.s_query = JSON.parse(additionalFields.s_query as string);
+							} catch {
+								throw new Error('Query (JSON) must be valid JSON');
+							}
+						}
+						responseData = await closeApiRequest.call(this, 'PUT', `/saved_search/${smartViewId}/`, body);
+					} else if (operation === 'delete') {
+						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/saved_search/${smartViewId}/`);
+						responseData = { success: true };
 					}
 				}
 
@@ -2302,10 +2360,26 @@ export class Close implements INodeType {
 
 				// ── CUSTOM FIELD ──────────────────────────────────────────────────────
 				else if (resource === 'customField') {
-					// Only getAll is exposed in the UI
 					const objectType = this.getNodeParameter('objectType', i) as string;
-					const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
-					responseData = res.data || [];
+					if (operation === 'getAll') {
+						const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
+						responseData = res.data || [];
+					} else if (operation === 'get') {
+						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/${customFieldId}/`);
+					} else if (operation === 'create') {
+						const name = this.getNodeParameter('name', i) as string;
+						const fieldType = this.getNodeParameter('fieldType', i) as string;
+						responseData = await closeApiRequest.call(this, 'POST', `/custom_field/${objectType}/`, { name, type: fieldType });
+					} else if (operation === 'update') {
+						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/custom_field/${objectType}/${customFieldId}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/custom_field/${objectType}/${customFieldId}/`);
+						responseData = { success: true };
+					}
 				}
 
 				// ── INTEGRATION LINK ──────────────────────────────────────────────────
