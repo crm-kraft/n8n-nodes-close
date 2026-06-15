@@ -1161,40 +1161,27 @@ export class Close implements INodeType {
 					},
 				],
 			},
-			{
-				displayName: 'Custom Fields',
-				name: 'customFields',
-				type: 'fixedCollection',
-				typeOptions: { multipleValues: true },
-				placeholder: 'Add Custom Field',
-				default: {},
-				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
-				options: [
-					{
-						name: 'customFieldValues',
-						displayName: 'Custom Field',
-						values: [
-							{
-								displayName: 'Field Name or ID',
-								name: 'key',
-								type: 'options',
-								description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-								typeOptions: {
-									loadOptionsMethod: 'getCustomActivityCustomFields',
-									loadOptionsDependsOn: ['activityTypeId'],
-								},
-								default: '',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								type: 'string',
-								default: '',
-							},
-						],
+				{
+					displayName: 'Custom Fields',
+					name: 'customFields',
+					type: 'resourceMapper',
+					noDataExpression: true,
+					default: { mappingMode: 'defineBelow', value: null },
+					required: false,
+					displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
+					typeOptions: {
+						loadOptionsDependsOn: ['activityTypeId'],
+						resourceMapper: {
+							resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
+							mode: 'add',
+							fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+							addAllFields: true,
+							supportAutoMap: false,
+							valuesLabel: '',
+							noFieldsError: 'No custom fields found. Select an Activity Type first.',
+						},
 					},
-				],
-			},
+				},
 			// ─── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
@@ -1684,14 +1671,16 @@ export class Close implements INodeType {
 					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-					// Activity custom fields are embedded in the activity type object — use /custom_activity/ and extract fields
+					// Use /custom_field/activity/ filtered by custom_activity_type_id to get full field definitions including choices
 					const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
-					const resp = await closeApiRequest.call(this, 'GET', '/custom_activity/');
-					const allTypes: IDataObject[] = resp.data || [];
 					if (!activityTypeId) return { fields: [] };
-					const matchedType = allTypes.find((t: IDataObject) => t.id === activityTypeId);
-					const fields: IDataObject[] = (matchedType?.fields as IDataObject[]) || [];
-					return buildResourceMapperFields(fields);
+					const [actResp, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { custom_activity_type_id: activityTypeId, _limit: 200 }),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const actFields: IDataObject[] = actResp.data || [];
+					const sharedFields = filterSharedFields(sharedResp.data || [], 'custom_activity_type', activityTypeId);
+					return buildResourceMapperFields([...actFields, ...sharedFields]);
 				},
 			},
 	};
@@ -2190,10 +2179,11 @@ export class Close implements INodeType {
 							lead_id: leadId,
 							custom_activity_type_id: activityTypeId,
 						};
-						const cfCollection = this.getNodeParameter('customFields.customFieldValues', i, []) as IDataObject[];
-						for (const cf of cfCollection) {
-							if (cf.key && cf.value !== null && cf.value !== undefined && cf.value !== '') {
-								body[`custom.${cf.key}`] = cf.value;
+						const cfMapper = this.getNodeParameter('customFields', i, { mappingMode: 'defineBelow', value: {} }) as IDataObject;
+						const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[`custom.${k}`] = v;
 							}
 						}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
@@ -2202,10 +2192,11 @@ export class Close implements INodeType {
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
-						const cfCollection = this.getNodeParameter('customFields.customFieldValues', i, []) as IDataObject[];
-						for (const cf of cfCollection) {
-							if (cf.key && cf.value !== null && cf.value !== undefined && cf.value !== '') {
-								body[`custom.${cf.key}`] = cf.value;
+						const cfMapper2 = this.getNodeParameter('customFields', i, { mappingMode: 'defineBelow', value: {} }) as IDataObject;
+						const cfValue2 = (cfMapper2?.value ?? {}) as IDataObject;
+						for (const [k, v] of Object.entries(cfValue2)) {
+							if (v !== null && v !== undefined && v !== '') {
+								body[`custom.${k}`] = v;
 							}
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
