@@ -1665,10 +1665,14 @@ export class Close implements INodeType {
 					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-					// Custom activity fields come from shared fields associated with custom_activity_type
-					const sharedResp = await closeApiRequest.call(this, 'GET', '/custom_field/shared/');
-					const sharedForActivity = filterSharedFields(sharedResp.data || [], 'custom_activity_type');
-					return buildResourceMapperFields(sharedForActivity);
+					// Activity custom fields are per activity type — use /custom_field/activity/ filtered by type ID
+					const activityTypeId = this.getCurrentNodeParameter('activityTypeId') as string | undefined;
+					const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/');
+					const allFields: IDataObject[] = resp.data || [];
+					const filtered = activityTypeId
+						? allFields.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
+						: allFields;
+					return buildResourceMapperFields(filtered);
 				},
 			},
 	};
@@ -2165,7 +2169,7 @@ export class Close implements INodeType {
 						const body: IDataObject = {
 							activity_at: additionalFields.activity_at || new Date().toISOString(),
 							lead_id: leadId,
-							_type: activityTypeId,
+							custom_activity_type_id: activityTypeId,
 						};
 						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
