@@ -1164,111 +1164,22 @@ export class Close implements INodeType {
 				{
 					displayName: 'Custom Fields',
 					name: 'customFields',
-					type: 'fixedCollection',
-					typeOptions: { multipleValues: true },
-					placeholder: 'Add Custom Field',
-					default: {},
+					type: 'resourceMapper',
+					noDataExpression: true,
+					default: { mappingMode: 'defineBelow', value: null },
+					required: false,
 					displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
-					options: [
-						{
-							name: 'customFieldValues',
-							displayName: 'Custom Field',
-							values: [
-								{
-									displayName: 'Field Name or ID',
-									name: 'key',
-									type: 'options',
-									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-									typeOptions: {
-										loadOptionsMethod: 'getCustomActivityCustomFields',
-										loadOptionsDependsOn: ['activityTypeId'],
-									},
-									default: '',
-								},
-								// ── Field type (auto-loaded from key, drives which value input is shown) ──
-								{
-									displayName: 'Field Type',
-									name: 'fieldType',
-									type: 'options',
-									description: 'Auto-detected from the selected field — determines which value input is shown',
-									typeOptions: {
-										loadOptionsMethod: 'getCustomActivityCustomFieldType',
-										loadOptionsDependsOn: ['activityTypeId', 'customFields.customFieldValues.key'],
-									},
-									default: 'text',
-								},
-								// ── Text / single-line ──────────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'stringValue',
-									type: 'string',
-									default: '',
-									displayOptions: { show: { fieldType: ['text', 'hidden', 'contact', 'custom_object'] } },
-								},
-								// ── Textarea / multi-line ───────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'textareaValue',
-									type: 'string',
-									typeOptions: { rows: 4 },
-									default: '',
-									displayOptions: { show: { fieldType: ['textarea'] } },
-								},
-								// ── Number ──────────────────────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'numberValue',
-									type: 'number',
-									default: 0,
-									displayOptions: { show: { fieldType: ['number'] } },
-								},
-								// ── Date / DateTime ─────────────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'dateValue',
-									type: 'dateTime',
-									default: '',
-									displayOptions: { show: { fieldType: ['date', 'datetime'] } },
-								},
-								// ── Single-choice dropdown ──────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'choiceValue',
-									type: 'options',
-									description: 'Choose from the list, or specify a value using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-									typeOptions: {
-										loadOptionsMethod: 'getCustomActivityCustomFieldChoices',
-										loadOptionsDependsOn: ['activityTypeId', 'customFields.customFieldValues.key'],
-									},
-									default: '',
-									displayOptions: { show: { fieldType: ['choices'] } },
-								},
-								// ── Multi-choice ────────────────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'multiChoiceValue',
-									type: 'multiOptions',
-									description: 'Choose one or more values from the list',
-									typeOptions: {
-										loadOptionsMethod: 'getCustomActivityCustomFieldChoices',
-										loadOptionsDependsOn: ['activityTypeId', 'customFields.customFieldValues.key'],
-									},
-									default: [],
-									displayOptions: { show: { fieldType: ['choices_multi'] } },
-								},
-								// ── User ────────────────────────────────────────────────────────────────
-								{
-									displayName: 'Value',
-									name: 'userValue',
-									type: 'options',
-									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-									typeOptions: { loadOptionsMethod: 'getUsers' },
-									default: '',
-									displayOptions: { show: { fieldType: ['user'] } },
-								},
-							],
+					typeOptions: {
+						resourceMapper: {
+							resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
+							mode: 'add',
+							fieldWords: { singular: 'Custom Field', plural: 'Custom Fields' },
+							addAllFields: false,
+							supportAutoMap: false,
+							valuesLabel: '',
+							noFieldsError: 'No custom fields found. Select an Activity Type first.',
 						},
-					],
+					},
 				},
 			// ─── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
 			{
@@ -2312,21 +2223,11 @@ export class Close implements INodeType {
 							lead_id: leadId,
 							custom_activity_type_id: activityTypeId,
 						};
-						const cfCollection = this.getNodeParameter('customFields.customFieldValues', i, []) as IDataObject[];
-						for (const cf of cfCollection) {
-							if (!cf.key) continue;
-							// Pick the value from whichever typed value field is populated
-							const fieldType = cf.fieldType as string || 'text';
-							let val: unknown;
-							if (fieldType === 'number') val = cf.numberValue;
-							else if (fieldType === 'textarea') val = cf.textareaValue;
-							else if (fieldType === 'date' || fieldType === 'datetime') val = cf.dateValue;
-							else if (fieldType === 'choices') val = cf.choiceValue;
-							else if (fieldType === 'choices_multi') val = cf.multiChoiceValue;
-							else if (fieldType === 'user') val = cf.userValue;
-							else val = cf.stringValue ?? cf.value; // text / hidden / contact / custom_object + legacy
-							if (val !== null && val !== undefined && val !== '' && !(Array.isArray(val) && val.length === 0)) {
-								body[`custom.${cf.key}`] = val;
+						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+						const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)) {
+								body[`custom.${k}`] = v;
 							}
 						}
 						responseData = await closeApiRequest.call(this, 'POST', '/activity/custom/', body);
@@ -2335,20 +2236,11 @@ export class Close implements INodeType {
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
 						if (additionalFields.activity_at) body.activity_at = additionalFields.activity_at;
-						const cfCollection = this.getNodeParameter('customFields.customFieldValues', i, []) as IDataObject[];
-						for (const cf of cfCollection) {
-							if (!cf.key) continue;
-							const fieldType = cf.fieldType as string || 'text';
-							let val: unknown;
-							if (fieldType === 'number') val = cf.numberValue;
-							else if (fieldType === 'textarea') val = cf.textareaValue;
-							else if (fieldType === 'date' || fieldType === 'datetime') val = cf.dateValue;
-							else if (fieldType === 'choices') val = cf.choiceValue;
-							else if (fieldType === 'choices_multi') val = cf.multiChoiceValue;
-							else if (fieldType === 'user') val = cf.userValue;
-							else val = cf.stringValue ?? cf.value;
-							if (val !== null && val !== undefined && val !== '' && !(Array.isArray(val) && val.length === 0)) {
-								body[`custom.${cf.key}`] = val;
+						const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
+						const cfValue = (cfMapper?.value ?? {}) as IDataObject;
+						for (const [k, v] of Object.entries(cfValue)) {
+							if (v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)) {
+								body[`custom.${k}`] = v;
 							}
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/custom/${id}/`, body);
