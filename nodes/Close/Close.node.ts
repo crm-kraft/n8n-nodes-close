@@ -1284,11 +1284,8 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['emailTemplate'] } },
 				options: [
-					{ name: 'Create', value: 'create', action: 'Create an email template' },
-					{ name: 'Delete', value: 'delete', action: 'Delete an email template' },
 					{ name: 'Get', value: 'get', action: 'Get an email template' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many email templates' },
-					{ name: 'Update', value: 'update', action: 'Update an email template' },
 				],
 				default: 'getAll',
 			},
@@ -1347,12 +1344,8 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['smartView'] } },
 				options: [
-					{ name: 'Create', value: 'create', action: 'Create a smart view' },
-					{ name: 'Delete', value: 'delete', action: 'Delete a smart view' },
-					{ name: 'Get', value: 'get', action: 'Get a smart view' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many smart views' },
 					{ name: 'Get Leads', value: 'getLeads', action: 'Get leads from a smart view' },
-					{ name: 'Update', value: 'update', action: 'Update a smart view' },
 				],
 				default: 'getAll',
 			},
@@ -1438,11 +1431,7 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['customField'] } },
 				options: [
-					{ name: 'Create', value: 'create', action: 'Create a custom field' },
-					{ name: 'Delete', value: 'delete', action: 'Delete a custom field' },
-					{ name: 'Get', value: 'get', action: 'Get a custom field' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many custom fields' },
-					{ name: 'Update', value: 'update', action: 'Update a custom field' },
 				],
 				default: 'getAll',
 			},
@@ -2313,9 +2302,34 @@ export class Close implements INodeType {
 
 				// ── CUSTOM FIELD ──────────────────────────────────────────────────────
 				else if (resource === 'customField') {
+					// Only getAll is exposed in the UI
 					const objectType = this.getNodeParameter('objectType', i) as string;
 					const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
 					responseData = res.data || [];
+				}
+
+				// ── INTEGRATION LINK ──────────────────────────────────────────────────
+				else if (resource === 'integrationLink') {
+					if (operation === 'getAll') {
+						const res = await closeApiRequest.call(this, 'GET', '/integration_link/');
+						responseData = res.data || [];
+					} else if (operation === 'get') {
+						const id = this.getNodeParameter('integrationLinkId', i) as string;
+						responseData = await closeApiRequest.call(this, 'GET', `/integration_link/${id}/`);
+					} else if (operation === 'create') {
+						const name = this.getNodeParameter('name', i) as string;
+						const url = this.getNodeParameter('url', i) as string;
+						const linkType = this.getNodeParameter('linkType', i) as string;
+						responseData = await closeApiRequest.call(this, 'POST', '/integration_link/', { name, url, link_type: linkType });
+					} else if (operation === 'update') {
+						const id = this.getNodeParameter('integrationLinkId', i) as string;
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						responseData = await closeApiRequest.call(this, 'PUT', `/integration_link/${id}/`, additionalFields);
+					} else if (operation === 'delete') {
+						const id = this.getNodeParameter('integrationLinkId', i) as string;
+						await closeApiRequest.call(this, 'DELETE', `/integration_link/${id}/`);
+						responseData = { success: true };
+					}
 				}
 
 				else {
