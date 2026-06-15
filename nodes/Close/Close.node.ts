@@ -1665,14 +1665,14 @@ export class Close implements INodeType {
 					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-					// Activity custom fields are per activity type — use /custom_field/activity/ filtered by type ID
+					// Activity custom fields are embedded in the activity type object — use /custom_activity/ and extract fields
 					const activityTypeId = this.getCurrentNodeParameter('activityTypeId') as string | undefined;
-					const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/');
-					const allFields: IDataObject[] = resp.data || [];
-					const filtered = activityTypeId
-						? allFields.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
-						: allFields;
-					return buildResourceMapperFields(filtered);
+					const resp = await closeApiRequest.call(this, 'GET', '/custom_activity/');
+					const allTypes: IDataObject[] = resp.data || [];
+					if (!activityTypeId) return { fields: [] };
+					const matchedType = allTypes.find((t: IDataObject) => t.id === activityTypeId);
+					const fields: IDataObject[] = (matchedType?.fields as IDataObject[]) || [];
+					return buildResourceMapperFields(fields);
 				},
 			},
 	};
