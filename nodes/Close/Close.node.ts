@@ -1718,14 +1718,16 @@ export class Close implements INodeType {
 					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-					// Activity custom fields are embedded in the activity type object — use /custom_activity/ and extract fields
+					// Use /custom_field/activity/ filtered by custom_activity_type_id to get full field definitions including choices
 					const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
-					const resp = await closeApiRequest.call(this, 'GET', '/custom_activity/');
-					const allTypes: IDataObject[] = resp.data || [];
 					if (!activityTypeId) return { fields: [] };
-					const matchedType = allTypes.find((t: IDataObject) => t.id === activityTypeId);
-					const fields: IDataObject[] = (matchedType?.fields as IDataObject[]) || [];
-					return buildResourceMapperFields(fields);
+					const [actResp, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { custom_activity_type_id: activityTypeId, _limit: 200 }),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const actFields: IDataObject[] = actResp.data || [];
+					const sharedFields = filterSharedFields(sharedResp.data || [], 'custom_activity_type', activityTypeId);
+					return buildResourceMapperFields([...actFields, ...sharedFields]);
 				},
 			},
 	};
