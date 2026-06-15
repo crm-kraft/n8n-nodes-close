@@ -1169,6 +1169,7 @@ export class Close implements INodeType {
 				default: { mappingMode: 'defineBelow', value: null },
 				required: false,
 				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
+				loadOptionsDependsOn: ['activityTypeId'],
 				typeOptions: {
 					resourceMapper: {
 						resourceMapperMethod: 'getCustomActivityCustomFieldsForMapper',
@@ -1178,7 +1179,6 @@ export class Close implements INodeType {
 						supportAutoMap: false,
 						valuesLabel: '',
 						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
-						loadOptionsDependsOn: ['activityTypeId'],
 					},
 				},
 			},
