@@ -1178,6 +1178,7 @@ export class Close implements INodeType {
 						supportAutoMap: false,
 						valuesLabel: '',
 						noFieldsError: 'No custom fields found. Check your Close CRM credentials.',
+						loadOptionsDependsOn: ['activityTypeId'],
 					},
 				},
 			},
