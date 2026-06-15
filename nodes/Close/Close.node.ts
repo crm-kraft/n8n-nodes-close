@@ -1666,7 +1666,7 @@ export class Close implements INodeType {
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 					// Activity custom fields are embedded in the activity type object — use /custom_activity/ and extract fields
-					const activityTypeId = this.getCurrentNodeParameter('activityTypeId') as string | undefined;
+					const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
 					const resp = await closeApiRequest.call(this, 'GET', '/custom_activity/');
 					const allTypes: IDataObject[] = resp.data || [];
 					if (!activityTypeId) return { fields: [] };
