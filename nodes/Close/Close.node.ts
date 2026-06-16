@@ -225,9 +225,19 @@ export class Close implements INodeType {
 				name: 'query',
 				type: 'string',
 				default: '',
-				required: true,
+				required: false,
 				displayOptions: { show: { resource: ['lead'], operation: ['search'] } },
-				description: 'Search query string',
+				description: 'Simple text search query. Leave empty if using Advanced Query (JSON) below.',
+			},
+			{
+				displayName: 'Advanced Query (JSON)',
+				name: 'advancedQuery',
+				type: 'json',
+				default: '',
+				required: false,
+				displayOptions: { show: { resource: ['lead'], operation: ['search'] } },
+				description: 'Structured query JSON for advanced filtering using the Close CRM Search API (POST /leads/search/). When provided, overrides the simple Query field. Paste the full s_query object from Close\'s advanced filter.',
+				typeOptions: { rows: 10 },
 			},
 			{
 				displayName: 'Return All',
@@ -1712,16 +1722,47 @@ export class Close implements INodeType {
 							const res = await closeApiRequest.call(this, 'GET', '/lead/', {}, { _limit: limit });
 							responseData = res.data || [];
 						}
-					} else if (operation === 'search') {
-						const query = this.getNodeParameter('query', i) as string;
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+				} else if (operation === 'search') {
+					const query = this.getNodeParameter('query', i, '') as string;
+					const advancedQueryRaw = this.getNodeParameter('advancedQuery', i, '') as string;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const limit = returnAll ? undefined : this.getNodeParameter('limit', i) as number;
+
+					if (advancedQueryRaw && advancedQueryRaw.trim() !== '') {
+						// Advanced structured query — use POST /leads/search/
+						let s_query: IDataObject;
+						try {
+							s_query = typeof advancedQueryRaw === 'string' ? JSON.parse(advancedQueryRaw) : advancedQueryRaw as IDataObject;
+						} catch {
+							throw new Error('Advanced Query (JSON) must be valid JSON');
+						}
+						const searchBody: IDataObject = { s_query, results_limit: limit ?? null, limit: null, sort: [] };
+						if (returnAll) {
+							// Paginate through all results using cursor-based pagination
+							const allLeads: IDataObject[] = [];
+							let cursor: string | undefined;
+							do {
+								if (cursor) searchBody.cursor = cursor;
+								const res = await closeApiRequest.call(this, 'POST', '/leads/search/', searchBody);
+								const leads = (res.data || []) as IDataObject[];
+								allLeads.push(...leads);
+								cursor = res.cursor as string | undefined;
+							} while (cursor);
+							responseData = allLeads;
+						} else {
+							searchBody.results_limit = limit!;
+							const res = await closeApiRequest.call(this, 'POST', '/leads/search/', searchBody);
+							responseData = res.data || [];
+						}
+					} else {
+						// Simple text search — use GET /lead/?query=...
 						if (returnAll) {
 							responseData = await closeApiRequestAllItems.call(this, 'GET', '/lead/', {}, { query });
 						} else {
-							const limit = this.getNodeParameter('limit', i) as number;
 							const res = await closeApiRequest.call(this, 'GET', '/lead/', {}, { query, _limit: limit });
 							responseData = res.data || [];
 						}
+					}
 				} else if (operation === 'create') {
 					const companyName = this.getNodeParameter('companyName', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
