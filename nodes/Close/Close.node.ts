@@ -1729,21 +1729,37 @@ export class Close implements INodeType {
 					const limit = returnAll ? undefined : this.getNodeParameter('limit', i) as number;
 
 					if (advancedQueryRaw && advancedQueryRaw.trim() !== '') {
-						// Advanced structured query — use POST /leads/search/
-						let s_query: IDataObject;
+						// Advanced structured query — use POST /data/search/
+						let parsed: IDataObject;
 						try {
-							s_query = typeof advancedQueryRaw === 'string' ? JSON.parse(advancedQueryRaw) : advancedQueryRaw as IDataObject;
+							parsed = typeof advancedQueryRaw === 'string' ? JSON.parse(advancedQueryRaw) : advancedQueryRaw as IDataObject;
 						} catch {
 							throw new Error('Advanced Query (JSON) must be valid JSON');
 						}
-						const searchBody: IDataObject = { s_query, results_limit: limit ?? null, limit: null, sort: [] };
+						// Support both formats:
+						// 1. Smart View s_query format: { query: {...}, results_limit, sort }
+						// 2. Direct query format: { type: 'and', queries: [...] }
+						let queryObj: IDataObject;
+						if (parsed.query) {
+							// Already wrapped — use as-is
+							queryObj = parsed.query as IDataObject;
+						} else {
+							// Bare query object
+							queryObj = parsed;
+						}
+						const searchBody: IDataObject = {
+							query: queryObj,
+							results_limit: limit ?? null,
+							sort: (parsed.sort as IDataObject[]) || [],
+							_fields: { lead: ['id', 'display_name', 'name', 'status_id', 'status_label', 'contacts', 'addresses', 'description', 'url', 'date_created', 'date_updated', 'created_by', 'updated_by', 'organization_id', 'opportunities', 'html_url', 'custom'] },
+						};
 						if (returnAll) {
 							// Paginate through all results using cursor-based pagination
 							const allLeads: IDataObject[] = [];
 							let cursor: string | undefined;
 							do {
 								if (cursor) searchBody.cursor = cursor;
-								const res = await closeApiRequest.call(this, 'POST', '/leads/search/', searchBody);
+								const res = await closeApiRequest.call(this, 'POST', '/data/search/', searchBody);
 								const leads = (res.data || []) as IDataObject[];
 								allLeads.push(...leads);
 								cursor = res.cursor as string | undefined;
@@ -1751,7 +1767,7 @@ export class Close implements INodeType {
 							responseData = allLeads;
 						} else {
 							searchBody.results_limit = limit!;
-							const res = await closeApiRequest.call(this, 'POST', '/leads/search/', searchBody);
+							const res = await closeApiRequest.call(this, 'POST', '/data/search/', searchBody);
 							responseData = res.data || [];
 						}
 					} else {
