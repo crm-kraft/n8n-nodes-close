@@ -667,6 +667,24 @@ export class Close implements INodeType {
 				],
 			},
 			{
+				displayName: 'Lead ID',
+				name: 'taskLeadId',
+				type: 'string',
+				default: '',
+				required: false,
+				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
+				description: 'Filter tasks by Lead ID. Leave empty to return tasks for all leads.',
+				placeholder: 'lead_abc123...',
+			},
+			{
+				displayName: 'Only Open Tasks',
+				name: 'onlyOpen',
+				type: 'boolean',
+				default: false,
+				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
+				description: 'Whether to return only incomplete (open) tasks. When enabled, completed tasks are excluded.',
+			},
+			{
 				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
@@ -2017,16 +2035,21 @@ export class Close implements INodeType {
 					if (operation === 'get') {
 						const taskId = this.getNodeParameter('taskId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/task/${taskId}/`);
-					} else if (operation === 'getAll') {
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-						if (returnAll) {
-							responseData = await closeApiRequestAllItems.call(this, 'GET', '/task/');
-						} else {
-							const limit = this.getNodeParameter('limit', i) as number;
-							const res = await closeApiRequest.call(this, 'GET', '/task/', {}, { _limit: limit });
-							responseData = res.data || [];
-						}
-					} else if (operation === 'create') {
+				} else if (operation === 'getAll') {
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const taskLeadId = this.getNodeParameter('taskLeadId', i, '') as string;
+					const onlyOpen = this.getNodeParameter('onlyOpen', i, false) as boolean;
+					const qs: IDataObject = {};
+					if (taskLeadId && taskLeadId.trim() !== '') qs.lead_id = taskLeadId.trim();
+					if (onlyOpen) qs.is_complete = 'false';
+					if (returnAll) {
+						responseData = await closeApiRequestAllItems.call(this, 'GET', '/task/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/task/', {}, { ...qs, _limit: limit });
+						responseData = res.data || [];
+					}
+				} else if (operation === 'create') {
 						const text = this.getNodeParameter('text', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = { text, ...additionalFields };
