@@ -1148,13 +1148,14 @@ export class Close implements INodeType {
 				default: {},
 				displayOptions: { show: { resource: ['customActivity'], operation: ['getAll'] } },
 				options: [
-					{
-						displayName: 'Custom Activity Type ID',
-						name: 'custom_activity_type_id',
-						type: 'string',
-						default: '',
-						description: 'Filter by a specific custom activity type ID',
-					},
+				{
+					displayName: 'Custom Activity Type',
+					name: 'custom_activity_type_id',
+					type: 'options',
+					default: '',
+					description: 'Filter by a specific custom activity type',
+					typeOptions: { loadOptionsMethod: 'getCustomActivityTypes' },
+				},
 					{
 						displayName: 'Date Created After',
 						name: 'date_created__gt',
