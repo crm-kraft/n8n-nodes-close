@@ -431,6 +431,7 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['opportunity'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create an opportunity' },
+					{ name: 'Create or Update', value: 'upsert', action: 'Create or update an opportunity' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an opportunity' },
 					{ name: 'Get', value: 'get', action: 'Get an opportunity' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many opportunities' },
@@ -452,7 +453,31 @@ export class Close implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
-				displayOptions: { show: { resource: ['opportunity'], operation: ['create'] } },
+				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'upsert'] } },
+			},
+			// ─── UPSERT-SPECIFIC FIELDS ─────────────────────────────────────────────
+			{
+				displayName: 'Pipeline Name or ID',
+				name: 'pipelineId',
+				type: 'options',
+				required: true,
+				description: 'Pipeline to search for existing opportunities. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				typeOptions: { loadOptionsMethod: 'getPipelinesForUpsert' },
+				default: '',
+				displayOptions: { show: { resource: ['opportunity'], operation: ['upsert'] } },
+			},
+			{
+				displayName: 'Status Type Filter',
+				name: 'statusTypeFilter',
+				type: 'multiOptions',
+				description: 'Only consider opportunities with these status types when searching. Leave empty to consider all status types.',
+				options: [
+					{ name: 'Active', value: 'active' },
+					{ name: 'Lost', value: 'lost' },
+					{ name: 'Won', value: 'won' },
+				],
+				default: [],
+				displayOptions: { show: { resource: ['opportunity'], operation: ['upsert'] } },
 			},
 			{
 				displayName: 'Additional Fields',
@@ -460,7 +485,7 @@ export class Close implements INodeType {
 				type: 'collection',
 				placeholder: 'Add Field',
 				default: {},
-				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update'] } },
+				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update', 'upsert'] } },
 				options: [
 					{ displayName: 'Note', name: 'note', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
@@ -488,7 +513,7 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				default: { mappingMode: 'defineBelow', value: null },
 				required: false,
-				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update'] } },
+				displayOptions: { show: { resource: ['opportunity'], operation: ['create', 'update', 'upsert'] } },
 				typeOptions: {
 					resourceMapper: {
 						resourceMapperMethod: 'getOpportunityCustomFieldsForMapper',
@@ -1669,6 +1694,13 @@ export class Close implements INodeType {
 					value: s.id as string,
 				}));
 			},
+			async getPipelinesForUpsert(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/pipeline/');
+				return (response.data || []).map((p: IDataObject) => ({
+					name: p.name as string,
+					value: p.id as string,
+				}));
+			},
 			async getCustomActivityTypes(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const response = await closeApiRequest.call(this, 'GET', '/custom_activity/');
 				return (response.data || []).map((t: IDataObject) => ({
@@ -2027,6 +2059,58 @@ export class Close implements INodeType {
 					}
 				}
 				responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
+					} else if (operation === 'upsert') {
+						const leadId = this.getNodeParameter('leadId', i) as string;
+						const pipelineId = this.getNodeParameter('pipelineId', i) as string;
+						const statusTypeFilter = this.getNodeParameter('statusTypeFilter', i, []) as string[];
+						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const cfMapperUpsert = this.getNodeParameter('customFields', i, {}) as IDataObject;
+						const cfValueUpsert = (cfMapperUpsert?.value ?? {}) as IDataObject;
+
+						// Fetch all opportunities for the lead (up to 200)
+						const oppRes = await closeApiRequest.call(this, 'GET', '/opportunity/', {}, { lead_id: leadId, _limit: 200 });
+						let opportunities: IDataObject[] = (oppRes.data || []) as IDataObject[];
+
+						// Filter by pipeline
+						opportunities = opportunities.filter((o) => o.pipeline_id === pipelineId);
+
+						// Optionally filter by status type — requires fetching statuses to map id -> type
+						if (statusTypeFilter.length > 0) {
+							const statusRes = await closeApiRequest.call(this, 'GET', '/status/opportunity/');
+							const statusTypeMap: Record<string, string> = {};
+							for (const s of (statusRes.data || []) as IDataObject[]) {
+								statusTypeMap[s.id as string] = s.type as string;
+							}
+							opportunities = opportunities.filter((o) => {
+								const sType = statusTypeMap[o.status_id as string];
+								return statusTypeFilter.includes(sType);
+							});
+						}
+
+						// Sort by date_created descending, pick the newest
+						opportunities.sort((a, b) => {
+							const aDate = new Date(a.date_created as string).getTime();
+							const bDate = new Date(b.date_created as string).getTime();
+							return bDate - aDate;
+						});
+
+						const upsertBody: IDataObject = { ...additionalFields };
+						for (const [k, v] of Object.entries(cfValueUpsert)) {
+							if (v !== null && v !== undefined && v !== '') {
+								upsertBody[`custom.${k}`] = v;
+							}
+						}
+
+						if (opportunities.length > 0) {
+							// Update the newest existing opportunity
+							const existingId = opportunities[0].id as string;
+							responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${existingId}/`, upsertBody);
+						} else {
+							// Create a new opportunity
+							upsertBody.lead_id = leadId;
+							upsertBody.pipeline_id = pipelineId;
+							responseData = await closeApiRequest.call(this, 'POST', '/opportunity/', upsertBody);
+						}
 					} else if (operation === 'delete') {
 						const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 						await closeApiRequest.call(this, 'DELETE', `/opportunity/${opportunityId}/`);
