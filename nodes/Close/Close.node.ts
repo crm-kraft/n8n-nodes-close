@@ -1787,6 +1787,7 @@ export class Close implements INodeType {
 			},
 			async getCustomActivityFieldsForFilter(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				// Read the selected activity type from the Filters collection
+				// If no type is selected, return empty — fields are type-specific
 				let activityTypeId: string | undefined;
 				try {
 					const filtersParam = this.getNodeParameter('filters') as IDataObject;
@@ -1794,15 +1795,15 @@ export class Close implements INodeType {
 				} catch {
 					activityTypeId = undefined;
 				}
+				if (!activityTypeId) return [];
 				const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { _limit: 200 });
 				const allFields: IDataObject[] = resp.data || [];
-				const filtered = activityTypeId
-					? allFields.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
-					: allFields;
-				return filtered.map((f: IDataObject) => ({
-					name: f.name as string,
-					value: f.id as string,
-				}));
+				return allFields
+					.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
+					.map((f: IDataObject) => ({
+						name: f.name as string,
+						value: f.id as string,
+					}));
 			},
 		},
 
