@@ -543,6 +543,44 @@ export class Close implements INodeType {
 				typeOptions: { minValue: 1, maxValue: 200 },
 				displayOptions: { show: { resource: ['opportunity'], operation: ['getAll'], returnAll: [false] } },
 			},
+			// ─── OPPORTUNITY GET MANY FILTERS ────────────────────────────────────────
+			{
+				displayName: 'Filters',
+				name: 'opportunityFilters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				displayOptions: { show: { resource: ['opportunity'], operation: ['getAll'] } },
+				options: [
+					{
+						displayName: 'Lead ID',
+						name: 'lead_id',
+						type: 'string',
+						default: '',
+						description: 'Return only opportunities belonging to this lead',
+					},
+					{
+						displayName: 'Status Type',
+						name: 'status_type',
+						type: 'multiOptions',
+						default: [],
+						description: 'Filter by opportunity status type (applied client-side)',
+						options: [
+							{ name: 'Active', value: 'active' },
+							{ name: 'Won', value: 'won' },
+							{ name: 'Lost', value: 'lost' },
+						],
+					},
+					{
+						displayName: 'User Name or ID',
+						name: 'user_id',
+						type: 'options',
+						default: '',
+						description: 'Return only opportunities assigned to this user. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						typeOptions: { loadOptionsMethod: 'getUsers' },
+					},
+				],
+			},
 
 			// ─── OPPORTUNITY STATUS ───────────────────────────────────────────────────
 			{
@@ -2080,16 +2118,38 @@ export class Close implements INodeType {
 					if (operation === 'get') {
 						const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/opportunity/${opportunityId}/`);
-					} else if (operation === 'getAll') {
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-						if (returnAll) {
-							responseData = await closeApiRequestAllItems.call(this, 'GET', '/opportunity/');
-						} else {
-							const limit = this.getNodeParameter('limit', i) as number;
-							const res = await closeApiRequest.call(this, 'GET', '/opportunity/', {}, { _limit: limit });
-							responseData = res.data || [];
+				} else if (operation === 'getAll') {
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const oppFilters = this.getNodeParameter('opportunityFilters', i, {}) as IDataObject;
+					const qs: IDataObject = {};
+					// Lead ID can be passed server-side
+					if (oppFilters.lead_id) qs.lead_id = oppFilters.lead_id;
+					// User ID can be passed server-side
+					if (oppFilters.user_id) qs.user_id = oppFilters.user_id;
+					let opps: IDataObject[];
+					if (returnAll) {
+						opps = await closeApiRequestAllItems.call(this, 'GET', '/opportunity/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/opportunity/', {}, { ...qs, _limit: limit });
+						opps = (res.data || []) as IDataObject[];
+					}
+					// Status type filter — client-side (requires fetching statuses to resolve type)
+					const statusTypes = (oppFilters.status_type as string[]) || [];
+					if (statusTypes.length > 0) {
+						// Fetch all opportunity statuses to map id -> type
+						const statusRes = await closeApiRequest.call(this, 'GET', '/status/opportunity/');
+						const statusMap: Record<string, string> = {};
+						for (const s of (statusRes.data || []) as IDataObject[]) {
+							statusMap[s.id as string] = s.type as string;
 						}
-					} else if (operation === 'create') {
+						opps = opps.filter((opp) => {
+							const type = statusMap[opp.status_id as string];
+							return statusTypes.includes(type);
+						});
+					}
+					responseData = opps;
+				} else if (operation === 'create') {
 					const leadId = this.getNodeParameter('leadId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const body: IDataObject = { lead_id: leadId, ...additionalFields };
