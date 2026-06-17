@@ -1786,8 +1786,14 @@ export class Close implements INodeType {
 				}));
 			},
 			async getCustomActivityFieldsForFilter(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				// Load custom fields for the selected activity type in the Filters > Custom Activity Type dropdown
-				const activityTypeId = this.getCurrentNodeParameter('filters.custom_activity_type_id', { extractValue: true }) as string | undefined;
+				// Read the selected activity type from the Filters collection
+				let activityTypeId: string | undefined;
+				try {
+					const filtersParam = this.getNodeParameter('filters') as IDataObject;
+					activityTypeId = filtersParam?.custom_activity_type_id as string | undefined;
+				} catch {
+					activityTypeId = undefined;
+				}
 				const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { _limit: 200 });
 				const allFields: IDataObject[] = resp.data || [];
 				const filtered = activityTypeId
