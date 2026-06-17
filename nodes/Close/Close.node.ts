@@ -677,12 +677,17 @@ export class Close implements INodeType {
 				placeholder: 'lead_abc123...',
 			},
 			{
-				displayName: 'Only Open Tasks',
-				name: 'onlyOpen',
-				type: 'boolean',
-				default: false,
+				displayName: 'Task Status',
+				name: 'taskStatus',
+				type: 'options',
+				default: 'all',
 				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
-				description: 'Whether to return only incomplete (open) tasks. When enabled, completed tasks are excluded.',
+				description: 'Filter tasks by completion status',
+				options: [
+					{ name: 'All', value: 'all', description: 'Return both open and completed tasks' },
+					{ name: 'Open', value: 'open', description: 'Return only incomplete (open) tasks' },
+					{ name: 'Completed', value: 'completed', description: 'Return only completed tasks' },
+				],
 			},
 			{
 				displayName: 'Return All',
@@ -2039,10 +2044,11 @@ export class Close implements INodeType {
 				} else if (operation === 'getAll') {
 					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 					const taskLeadId = this.getNodeParameter('taskLeadId', i, '') as string;
-					const onlyOpen = this.getNodeParameter('onlyOpen', i, false) as boolean;
+					const taskStatus = this.getNodeParameter('taskStatus', i, 'all') as string;
 					const qs: IDataObject = {};
 					if (taskLeadId && taskLeadId.trim() !== '') qs.lead_id = taskLeadId.trim();
-					if (onlyOpen) qs.is_complete = 'false';
+					if (taskStatus === 'open') qs.is_complete = 'false';
+					else if (taskStatus === 'completed') qs.is_complete = 'true';
 					if (returnAll) {
 						responseData = await closeApiRequestAllItems.call(this, 'GET', '/task/', {}, qs);
 					} else {
