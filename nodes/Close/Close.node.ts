@@ -667,26 +667,69 @@ export class Close implements INodeType {
 				],
 			},
 			{
-				displayName: 'Lead ID',
-				name: 'taskLeadId',
-				type: 'string',
-				default: '',
-				required: false,
+				displayName: 'Filters',
+				name: 'taskFilters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
 				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
-				description: 'Filter tasks by Lead ID. Leave empty to return tasks for all leads.',
-				placeholder: 'lead_abc123...',
-			},
-			{
-				displayName: 'Task Status',
-				name: 'taskStatus',
-				type: 'options',
-				default: 'all',
-				displayOptions: { show: { resource: ['task'], operation: ['getAll'] } },
-				description: 'Filter tasks by completion status',
 				options: [
-					{ name: 'All', value: 'all', description: 'Return both open and completed tasks' },
-					{ name: 'Open', value: 'open', description: 'Return only incomplete (open) tasks' },
-					{ name: 'Completed', value: 'completed', description: 'Return only completed tasks' },
+					{
+						displayName: 'Lead ID',
+						name: 'lead_id',
+						type: 'string',
+						default: '',
+						description: 'Return only tasks belonging to this lead',
+						placeholder: 'lead_abc123...',
+					},
+					{
+						displayName: 'Task Status',
+						name: 'taskStatus',
+						type: 'options',
+						default: 'all',
+						description: 'Filter by completion status',
+						options: [
+							{ name: 'All', value: 'all', description: 'Return both open and completed tasks' },
+							{ name: 'Open', value: 'open', description: 'Return only incomplete (open) tasks' },
+							{ name: 'Completed', value: 'completed', description: 'Return only completed tasks' },
+						],
+					},
+					{
+						displayName: 'Assigned To',
+						name: 'assigned_to',
+						type: 'options',
+						default: '',
+						description: 'Return only tasks assigned to this user',
+						typeOptions: { loadOptionsMethod: 'getUsers' },
+					},
+					{
+						displayName: 'Due Date After',
+						name: 'due_date__gte',
+						type: 'dateTime',
+						default: '',
+						description: 'Return tasks with a due date on or after this date',
+					},
+					{
+						displayName: 'Due Date Before',
+						name: 'due_date__lte',
+						type: 'dateTime',
+						default: '',
+						description: 'Return tasks with a due date on or before this date',
+					},
+					{
+						displayName: 'Date Created After',
+						name: 'date_created__gte',
+						type: 'dateTime',
+						default: '',
+						description: 'Return tasks created on or after this date',
+					},
+					{
+						displayName: 'Date Created Before',
+						name: 'date_created__lte',
+						type: 'dateTime',
+						default: '',
+						description: 'Return tasks created on or before this date',
+					},
 				],
 			},
 			{
@@ -2043,10 +2086,15 @@ export class Close implements INodeType {
 						responseData = await closeApiRequest.call(this, 'GET', `/task/${taskId}/`);
 				} else if (operation === 'getAll') {
 					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-					const taskLeadId = this.getNodeParameter('taskLeadId', i, '') as string;
-					const taskStatus = this.getNodeParameter('taskStatus', i, 'all') as string;
+					const taskFilters = this.getNodeParameter('taskFilters', i, {}) as IDataObject;
 					const qs: IDataObject = {};
-					if (taskLeadId && taskLeadId.trim() !== '') qs.lead_id = taskLeadId.trim();
+					if (taskFilters.lead_id) qs.lead_id = taskFilters.lead_id;
+					if (taskFilters.assigned_to) qs.assigned_to = taskFilters.assigned_to;
+					if (taskFilters.due_date__gte) qs.due_date__gte = taskFilters.due_date__gte;
+					if (taskFilters.due_date__lte) qs.due_date__lte = taskFilters.due_date__lte;
+					if (taskFilters.date_created__gte) qs.date_created__gte = taskFilters.date_created__gte;
+					if (taskFilters.date_created__lte) qs.date_created__lte = taskFilters.date_created__lte;
+					const taskStatus = (taskFilters.taskStatus as string) || 'all';
 					if (taskStatus === 'open') qs.is_complete = 'false';
 					else if (taskStatus === 'completed') qs.is_complete = 'true';
 					if (returnAll) {
