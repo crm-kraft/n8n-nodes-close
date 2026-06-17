@@ -1243,9 +1243,44 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return instances created before this date/time (exclusive)',
 					},
+					{
+						displayName: 'Custom Field Filters',
+						name: 'customFieldFilters',
+						type: 'fixedCollection',
+						typeOptions: { multipleValues: true },
+						placeholder: 'Add Custom Field Filter',
+						default: {},
+						description: 'Filter results by custom field values (applied client-side after fetching)',
+						options: [
+							{
+								name: 'conditions',
+								displayName: 'Condition',
+								values: [
+									{
+										displayName: 'Field Name or ID',
+										name: 'fieldId',
+										type: 'options',
+										typeOptions: {
+											loadOptionsMethod: 'getCustomActivityFieldsForFilter',
+											loadOptionsDependsOn: ['filters.custom_activity_type_id'],
+										},
+										description: 'The custom field to filter by. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+										default: '',
+									},
+									{
+										displayName: 'Value',
+										name: 'value',
+										type: 'string',
+										default: '',
+										description: 'The value the custom field must equal (case-sensitive). For choice fields use the exact option label.',
+									},
+								],
+							},
+						],
+					},
 
-				],
-			},
+					],
+				},
 			{
 				displayName: 'Additional Fields',
 				name: 'additionalFields',
@@ -1745,6 +1780,19 @@ export class Close implements INodeType {
 				const matchedType = allTypes.find((t: IDataObject) => t.id === activityTypeId);
 				const fields: IDataObject[] = (matchedType?.fields as IDataObject[]) || [];
 				return fields.map((f: IDataObject) => ({
+					name: f.name as string,
+					value: f.id as string,
+				}));
+			},
+			async getCustomActivityFieldsForFilter(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				// Load custom fields for the selected activity type in the Filters > Custom Activity Type dropdown
+				const activityTypeId = this.getCurrentNodeParameter('filters.custom_activity_type_id', { extractValue: true }) as string | undefined;
+				const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { _limit: 200 });
+				const allFields: IDataObject[] = resp.data || [];
+				const filtered = activityTypeId
+					? allFields.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
+					: allFields;
+				return filtered.map((f: IDataObject) => ({
 					name: f.name as string,
 					value: f.id as string,
 				}));
@@ -2391,7 +2439,28 @@ export class Close implements INodeType {
 						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
 						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
 						const res = await closeApiRequest.call(this, 'GET', '/activity/custom/', {}, qs);
-						responseData = res.data || [];
+						let instances: IDataObject[] = (res.data || []) as IDataObject[];
+
+						// Client-side custom field filtering
+						const cfFilters = filters.customFieldFilters as IDataObject | undefined;
+						const cfConditions = (cfFilters?.conditions as IDataObject[]) || [];
+						if (cfConditions.length > 0) {
+							instances = instances.filter((instance) => {
+								return cfConditions.every((cond) => {
+									const fieldId = cond.fieldId as string;
+									const expectedValue = cond.value as string;
+									if (!fieldId) return true;
+									// Custom fields are stored as custom.{fieldId} on the instance
+									const actualValue = instance[`custom.${fieldId}`];
+									// Support both single value and array (multiselect fields)
+									if (Array.isArray(actualValue)) {
+										return (actualValue as string[]).includes(expectedValue);
+									}
+									return String(actualValue ?? '') === expectedValue;
+								});
+							});
+						}
+						responseData = instances;
 					} else if (operation === 'create') {
 						const leadId = this.getNodeParameter('customActivityLeadId', i) as string;
 						const activityTypeId = this.getNodeParameter('activityTypeId', i) as string;
