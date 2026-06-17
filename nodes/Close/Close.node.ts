@@ -1243,46 +1243,47 @@ export class Close implements INodeType {
 						default: '',
 						description: 'Return instances created before this date/time (exclusive)',
 					},
-					{
-						displayName: 'Custom Field Filters',
-						name: 'customFieldFilters',
-						type: 'fixedCollection',
-						typeOptions: { multipleValues: true },
-						placeholder: 'Add Custom Field Filter',
-						default: {},
-						description: 'Filter results by custom field values (applied client-side after fetching)',
-						options: [
-							{
-								name: 'conditions',
-								displayName: 'Condition',
-								values: [
-									{
-										displayName: 'Field Name or ID',
-										name: 'fieldId',
-										type: 'options',
-										typeOptions: {
-											loadOptionsMethod: 'getCustomActivityFieldsForFilter',
-											loadOptionsDependsOn: ['filters.custom_activity_type_id'],
-										},
-										description: 'The custom field to filter by. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-										default: '',
-									},
-									{
-										displayName: 'Value',
-										name: 'value',
-										type: 'string',
-										default: '',
-										description: 'The value the custom field must equal (case-sensitive). For choice fields use the exact option label.',
-									},
-								],
-							},
-						],
-					},
-
 					],
 				},
-			{
-				displayName: 'Additional Fields',
+				// ─── Custom Field Filters (top-level fixedCollection) ─────────────────
+				{
+					displayName: 'Custom Field Filters',
+					name: 'customFieldFilters',
+					type: 'fixedCollection',
+					typeOptions: { multipleValues: true },
+					placeholder: 'Add Custom Field Filter',
+					default: {},
+					description: 'Filter results by custom field values (applied client-side). Select a Custom Activity Type in Filters first to populate the field dropdown.',
+					displayOptions: { show: { resource: ['customActivity'], operation: ['getAll'] } },
+					options: [
+						{
+							name: 'conditions',
+							displayName: 'Condition',
+							values: [
+								{
+									displayName: 'Field Name or ID',
+									name: 'fieldId',
+									type: 'options',
+									typeOptions: {
+										loadOptionsMethod: 'getCustomActivityFieldsForFilter',
+										loadOptionsDependsOn: ['filters.custom_activity_type_id'],
+									},
+									description: 'The custom field to filter by. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+									default: '',
+								},
+								{
+									displayName: 'Value',
+									name: 'value',
+									type: 'string',
+									default: '',
+									description: 'The value the custom field must equal (case-sensitive). For choice fields use the exact option label.',
+								},
+							],
+						},
+					],
+				},
+				{
+					displayName: 'Additional Fields',
 				name: 'additionalFields',
 				type: 'collection',
 				placeholder: 'Add Field',
@@ -2442,7 +2443,7 @@ export class Close implements INodeType {
 						let instances: IDataObject[] = (res.data || []) as IDataObject[];
 
 						// Client-side custom field filtering
-						const cfFilters = filters.customFieldFilters as IDataObject | undefined;
+						const cfFilters = this.getNodeParameter('customFieldFilters', i, {}) as IDataObject;
 						const cfConditions = (cfFilters?.conditions as IDataObject[]) || [];
 						if (cfConditions.length > 0) {
 							instances = instances.filter((instance) => {
