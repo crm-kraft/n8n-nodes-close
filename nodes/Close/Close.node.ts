@@ -2165,7 +2165,7 @@ export class Close implements INodeType {
 						try {
 							parsed = typeof advancedQueryRaw === 'string' ? JSON.parse(advancedQueryRaw) : advancedQueryRaw as IDataObject;
 						} catch {
-							throw new Error('Advanced Query (JSON) must be valid JSON');
+								throw new NodeOperationError(this.getNode(), 'Advanced Query (JSON) must be valid JSON', { itemIndex: i });
 						}
 						// Support both formats:
 						// 1. Smart View s_query format: { query: {...}, results_limit, sort }
@@ -2939,7 +2939,7 @@ export class Close implements INodeType {
 						try {
 							s_query = JSON.parse(s_query_raw);
 						} catch {
-							throw new Error('Query (JSON) must be valid JSON');
+							throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
 						}
 						responseData = await closeApiRequest.call(this, 'POST', '/saved_search/', { name, s_query });
 					} else if (operation === 'update') {
@@ -2951,7 +2951,7 @@ export class Close implements INodeType {
 							try {
 								body.s_query = JSON.parse(additionalFields.s_query as string);
 							} catch {
-								throw new Error('Query (JSON) must be valid JSON');
+								throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
 							}
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/saved_search/${smartViewId}/`, body);
