@@ -20,7 +20,7 @@ export class CloseTrigger implements INodeType {
 		group: ['trigger'],
 		version: 1,
 		subtitle: '={{$parameter["event"]}}',
-		description: 'Starts the workflow when Close CRM events occur',
+		description: 'Interact with Close CRM — manage leads, contacts, opportunities, tasks, notes, calls, emails, custom activities, pipelines, and more. Includes a full webhook trigger for real-time events.',
 		codex: {
 			categories: ['Sales', 'CRM'],
 			alias: ['close', 'close crm', 'closecrm', 'close.com', 'crm', 'leads', 'contacts', 'opportunities', 'sales', 'webhook', 'trigger'],
