@@ -645,12 +645,29 @@ export class Close implements INodeType {
 							{ name: 'Won', value: 'won' },
 							{ name: 'Lost', value: 'lost' },
 						],
-						default: 'active',
+												default: 'active',
 					},
 				],
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['opportunityStatus'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['opportunityStatus'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── PIPELINE ─────────────────────────────────────────────────────────────
+				// ─── PIPELINE ─────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -679,11 +696,28 @@ export class Close implements INodeType {
 				name: 'name',
 				type: 'string',
 				default: '',
-				required: true,
-				displayOptions: { show: { resource: ['pipeline'], operation: ['create', 'update'] } },
-			},
+									required: true,
+					displayOptions: { show: { resource: ['pipeline'], operation: ['create', 'update'] } },
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['pipeline'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['pipeline'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── TASK ─────────────────────────────────────────────────────────────────
+				// ─── TASK ─────────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -937,14 +971,31 @@ export class Close implements INodeType {
 						description: 'Return activities created before this date/time (exclusive)',
 					},
 				],
-			},
-			// ─── CALL ─────────────────────────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['call'] } },
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['note'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['note'], operation: ['getAll'], returnAll: [false] } },
+				},
+				// ─── CALL ─────────────────────────────────────────────────────────────────
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					noDataExpression: true,
+					displayOptions: { show: { resource: ['call'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a call' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a call' },
@@ -1034,14 +1085,31 @@ export class Close implements INodeType {
 						description: 'Return activities created before this date/time (exclusive)',
 					},
 				],
-			},
-			// ─── EMAIL ────────────────────────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['email'] } },
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['call'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['call'], operation: ['getAll'], returnAll: [false] } },
+				},
+				// ─── EMAIL ─────────────────────────────────────────────────────────────────
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					noDataExpression: true,
+					displayOptions: { show: { resource: ['email'] } },
 				options: [
 					{ name: 'Create (Send)', value: 'create', action: 'Send an email' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an email' },
@@ -1130,14 +1198,31 @@ export class Close implements INodeType {
 						description: 'Return activities created before this date/time (exclusive)',
 					},
 				],
-			},
-			// ─── SMS ──────────────────────────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['sms'] } },
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['email'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['email'], operation: ['getAll'], returnAll: [false] } },
+				},
+				// ─── SMS ─────────────────────────────────────────────────────────────────
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					noDataExpression: true,
+					displayOptions: { show: { resource: ['sms'] } },
 				options: [
 					{ name: 'Create (Send)', value: 'create', action: 'Send an SMS' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an SMS' },
@@ -1208,14 +1293,31 @@ export class Close implements INodeType {
 						description: 'Return activities created before this date/time (exclusive)',
 					},
 				],
-			},
-			// ─── CUSTOM ACTIVITY ──────────────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['customActivity'] } },
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['sms'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['sms'], operation: ['getAll'], returnAll: [false] } },
+				},
+				// ─── CUSTOM ACTIVITY ─────────────────────────────────────────────────────────────────
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					noDataExpression: true,
+					displayOptions: { show: { resource: ['customActivity'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a custom activity instance' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a custom activity instance' },
@@ -1316,9 +1418,26 @@ export class Close implements INodeType {
 									default: '',
 									description: 'The value the custom field must equal (case-sensitive). For choice fields use the exact option label.',
 								},
-							],
-						},
+						],
+					},
 					],
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['customActivity'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['customActivity'], operation: ['getAll'], returnAll: [false] } },
 				},
 				{
 					displayName: 'Additional Fields',
@@ -1409,11 +1528,28 @@ export class Close implements INodeType {
 						name: 'api_create_url',
 						type: 'string',
 						default: '',
-						description: 'Optional webhook URL called when an instance is created',
+												description: 'Optional webhook URL called when an instance is created',
 					},
 				],
-			},
-			// ─── COMMENT ──────────────────────────────────────────────────────────────
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['customActivityType'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['customActivityType'], operation: ['getAll'], returnAll: [false] } },
+				},
+				// ─── COMMENT ──────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -1450,15 +1586,32 @@ export class Close implements INodeType {
 				default: '',
 				required: true,
 				displayOptions: { show: { resource: ['comment'], operation: ['create'] } },
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['comment'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['comment'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── EMAIL TEMPLATE ───────────────────────────────────────────────────────
-			{
-				displayName: 'Operation',
-				name: 'operation',
-				type: 'options',
-				noDataExpression: true,
-				displayOptions: { show: { resource: ['emailTemplate'] } },
+				// ─── EMAIL TEMPLATE ─────────────────────────────────────────────────────────────────
+				{
+					displayName: 'Operation',
+					name: 'operation',
+					type: 'options',
+					noDataExpression: true,
+					displayOptions: { show: { resource: ['emailTemplate'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create an email template' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an email template' },
@@ -1511,11 +1664,28 @@ export class Close implements INodeType {
 				options: [
 					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
 					{ displayName: 'Subject', name: 'subject', type: 'string', default: '' },
-					{ displayName: 'Body HTML', name: 'body_html', type: 'string', default: '' },
+										{ displayName: 'Body HTML', name: 'body_html', type: 'string', default: '' },
 				],
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['emailTemplate'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['emailTemplate'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── SMART VIEW ───────────────────────────────────────────────────────────
+				// ─── SMART VIEW ───────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -1566,11 +1736,28 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['smartView'], operation: ['update'] } },
 				options: [
 					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
-					{ displayName: 'Query (JSON)', name: 's_query', type: 'string', default: '' },
+										{ displayName: 'Query (JSON)', name: 's_query', type: 'string', default: '' },
 				],
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['smartView'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['smartView'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── USER ─────────────────────────────────────────────────────────────────
+				// ─── USER ─────────────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -1601,12 +1788,29 @@ export class Close implements INodeType {
 							{ name: 'Active', value: 'true' },
 							{ name: 'Inactive', value: 'false' },
 						],
-						description: 'Filter users by active/inactive status',
+												description: 'Filter users by active/inactive status',
 					},
 				],
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['user'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['user'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── CUSTOM FIELD ─────────────────────────────────────────────────────────
+				// ─── CUSTOM FIELD ─────────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -1678,11 +1882,28 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customField'], operation: ['update'] } },
 				options: [
 					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
-					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
+										{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 				],
-			},
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['customField'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['customField'], operation: ['getAll'], returnAll: [false] } },
+				},
 
-			// ─── INTEGRATION LINK ─────────────────────────────────────────────────────
+				// ─── INTEGRATION LINK ─────────────────────────────────────────────────────
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -1747,9 +1968,26 @@ export class Close implements INodeType {
 					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
 					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
 				],
-			},
-		],
-		usableAsTool: true,
+				},
+				{
+					displayName: 'Return All',
+					name: 'returnAll',
+					type: 'boolean',
+					description: 'Whether to return all results or only up to a given limit',
+					default: false,
+					displayOptions: { show: { resource: ['integrationLink'], operation: ['getAll'] } },
+				},
+				{
+					displayName: 'Limit',
+					name: 'limit',
+					type: 'number',
+					description: 'Max number of results to return',
+					default: 50,
+					typeOptions: { minValue: 1, maxValue: 1000 },
+					displayOptions: { show: { resource: ['integrationLink'], operation: ['getAll'], returnAll: [false] } },
+				},
+			],
+			usableAsTool: true,
 	};
 
 	methods = {
@@ -2237,8 +2475,10 @@ export class Close implements INodeType {
 				// ── OPPORTUNITY STATUS ────────────────────────────────────────────────
 				else if (resource === 'opportunityStatus') {
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/status/opportunity/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const id = this.getNodeParameter('opportunityStatusId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/status/opportunity/${id}/`);
@@ -2260,8 +2500,10 @@ export class Close implements INodeType {
 				// ── PIPELINE ──────────────────────────────────────────────────────────
 				else if (resource === 'pipeline') {
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/pipeline/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const id = this.getNodeParameter('pipelineId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/pipeline/${id}/`);
@@ -2370,16 +2612,22 @@ export class Close implements INodeType {
 					} else if (operation === 'get') {
 						const noteId = this.getNodeParameter('noteId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/note/${noteId}/`);
-					} else if (operation === 'getAll') {
-						const leadId = this.getNodeParameter('leadId', i) as string;
-						const filters = this.getNodeParameter('filters', i) as IDataObject;
-						const qs: IDataObject = { lead_id: leadId };
-						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
-						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, qs);
+				} else if (operation === 'getAll') {
+					const leadId = this.getNodeParameter('leadId', i) as string;
+					const filters = this.getNodeParameter('filters', i) as IDataObject;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const qs: IDataObject = { lead_id: leadId };
+					if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+					if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+					if (returnAll) {
+						responseData = await closeApiRequestAllItems.call(this, 'GET', '/activity/note/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, { ...qs, _limit: limit });
 						responseData = res.data || [];
-					} else if (operation === 'update') {
-						const noteId = this.getNodeParameter('noteId', i) as string;
+					}
+				} else if (operation === 'update') {
+					const noteId = this.getNodeParameter('noteId', i) as string;
 						const noteType = this.getNodeParameter('noteType', i) as string;
 						const body: IDataObject = {};
 						if (noteType === 'html') {
@@ -2406,16 +2654,22 @@ export class Close implements INodeType {
 					} else if (operation === 'get') {
 						const callId = this.getNodeParameter('callId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/call/${callId}/`);
-					} else if (operation === 'getAll') {
-						const leadId = this.getNodeParameter('callLeadId', i) as string;
-						const filters = this.getNodeParameter('filters', i) as IDataObject;
-						const qs: IDataObject = { lead_id: leadId };
-						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
-						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, qs);
+				} else if (operation === 'getAll') {
+					const leadId = this.getNodeParameter('callLeadId', i) as string;
+					const filters = this.getNodeParameter('filters', i) as IDataObject;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const qs: IDataObject = { lead_id: leadId };
+					if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+					if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+					if (returnAll) {
+						responseData = await closeApiRequestAllItems.call(this, 'GET', '/activity/call/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/call/', {}, { ...qs, _limit: limit });
 						responseData = res.data || [];
-					} else if (operation === 'update') {
-						const callId = this.getNodeParameter('callId', i) as string;
+					}
+				} else if (operation === 'update') {
+					const callId = this.getNodeParameter('callId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/call/${callId}/`, additionalFields);
 					} else if (operation === 'delete') {
@@ -2447,16 +2701,22 @@ export class Close implements INodeType {
 					} else if (operation === 'get') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/email/${emailId}/`);
-					} else if (operation === 'getAll') {
-						const leadId = this.getNodeParameter('emailLeadId', i) as string;
-						const filters = this.getNodeParameter('filters', i) as IDataObject;
-						const qs: IDataObject = { lead_id: leadId };
-						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
-						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, qs);
+				} else if (operation === 'getAll') {
+					const leadId = this.getNodeParameter('emailLeadId', i) as string;
+					const filters = this.getNodeParameter('filters', i) as IDataObject;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const qs: IDataObject = { lead_id: leadId };
+					if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+					if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+					if (returnAll) {
+						responseData = await closeApiRequestAllItems.call(this, 'GET', '/activity/email/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/email/', {}, { ...qs, _limit: limit });
 						responseData = res.data || [];
-					} else if (operation === 'update') {
-						const emailId = this.getNodeParameter('emailId', i) as string;
+					}
+				} else if (operation === 'update') {
+					const emailId = this.getNodeParameter('emailId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/email/${emailId}/`, additionalFields);
 					} else if (operation === 'delete') {
@@ -2476,16 +2736,22 @@ export class Close implements INodeType {
 					} else if (operation === 'get') {
 						const smsId = this.getNodeParameter('smsId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/sms/${smsId}/`);
-					} else if (operation === 'getAll') {
-						const leadId = this.getNodeParameter('smsLeadId', i) as string;
-						const filters = this.getNodeParameter('filters', i) as IDataObject;
-						const qs: IDataObject = { lead_id: leadId };
-						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
-						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, qs);
+				} else if (operation === 'getAll') {
+					const leadId = this.getNodeParameter('smsLeadId', i) as string;
+					const filters = this.getNodeParameter('filters', i) as IDataObject;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const qs: IDataObject = { lead_id: leadId };
+					if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+					if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+					if (returnAll) {
+						responseData = await closeApiRequestAllItems.call(this, 'GET', '/activity/sms/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/sms/', {}, { ...qs, _limit: limit });
 						responseData = res.data || [];
-					} else if (operation === 'update') {
-						const smsId = this.getNodeParameter('smsId', i) as string;
+					}
+				} else if (operation === 'update') {
+					const smsId = this.getNodeParameter('smsId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						responseData = await closeApiRequest.call(this, 'PUT', `/activity/sms/${smsId}/`, additionalFields);
 					} else if (operation === 'delete') {
@@ -2499,15 +2765,22 @@ export class Close implements INodeType {
 					if (operation === 'get') {
 						const id = this.getNodeParameter('customActivityId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/custom/${id}/`);
-					} else if (operation === 'getAll') {
-						const leadId = this.getNodeParameter('customActivityLeadId', i) as string;
-						const filters = this.getNodeParameter('filters', i) as IDataObject;
-						const qs: IDataObject = { lead_id: leadId };
-						if (filters.custom_activity_type_id) qs.custom_activity_type_id = filters.custom_activity_type_id;
-						if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
-						if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/custom/', {}, qs);
-						let instances: IDataObject[] = (res.data || []) as IDataObject[];
+				} else if (operation === 'getAll') {
+					const leadId = this.getNodeParameter('customActivityLeadId', i) as string;
+					const filters = this.getNodeParameter('filters', i) as IDataObject;
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const qs: IDataObject = { lead_id: leadId };
+					if (filters.custom_activity_type_id) qs.custom_activity_type_id = filters.custom_activity_type_id;
+					if (filters.date_created__gt) qs.date_created__gt = filters.date_created__gt;
+					if (filters.date_created__lt) qs.date_created__lt = filters.date_created__lt;
+					let instances: IDataObject[];
+					if (returnAll) {
+						instances = await closeApiRequestAllItems.call(this, 'GET', '/activity/custom/', {}, qs);
+					} else {
+						const limit = this.getNodeParameter('limit', i) as number;
+						const res = await closeApiRequest.call(this, 'GET', '/activity/custom/', {}, { ...qs, _limit: limit });
+						instances = (res.data || []) as IDataObject[];
+					}
 
 						// Client-side custom field filtering
 						const cfFilters = this.getNodeParameter('customFieldFilters', i, {}) as IDataObject;
@@ -2568,8 +2841,10 @@ export class Close implements INodeType {
 				// ── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
 				else if (resource === 'customActivityType') {
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/custom_activity/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const id = this.getNodeParameter('customActivityTypeId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/custom_activity/${id}/`);
@@ -2593,8 +2868,14 @@ export class Close implements INodeType {
 				else if (resource === 'comment') {
 					if (operation === 'getAll') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
-						const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, { lead_id: leadId });
-						responseData = res.data || [];
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						if (returnAll) {
+							responseData = await closeApiRequestAllItems.call(this, 'GET', '/activity/note/', {}, { lead_id: leadId });
+						} else {
+							const limit = this.getNodeParameter('limit', i) as number;
+							const res = await closeApiRequest.call(this, 'GET', '/activity/note/', {}, { lead_id: leadId, _limit: limit });
+							responseData = res.data || [];
+						}
 					} else if (operation === 'create') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
 						const note = this.getNodeParameter('note', i) as string;
@@ -2611,9 +2892,11 @@ export class Close implements INodeType {
 					if (operation === 'get') {
 						const templateId = this.getNodeParameter('templateId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/email_template/${templateId}/`);
-					} else if (operation === 'getAll') {
-						const res = await closeApiRequest.call(this, 'GET', '/email_template/');
-						responseData = res.data || [];
+				} else if (operation === 'getAll') {
+					const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+					const res = await closeApiRequest.call(this, 'GET', '/email_template/');
+					const allItems = (res.data || []) as IDataObject[];
+					responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'create') {
 						const name = this.getNodeParameter('name', i) as string;
 						const subject = this.getNodeParameter('subject', i) as string;
@@ -2639,8 +2922,10 @@ export class Close implements INodeType {
 				// ── SMART VIEW ────────────────────────────────────────────────────────
 				else if (resource === 'smartView') {
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/saved_search/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/saved_search/${smartViewId}/`);
@@ -2706,8 +2991,10 @@ export class Close implements INodeType {
 						responseData = inactiveUsers;
 					} else {
 						// Active or All: /user/ endpoint returns only active members
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/user/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					}
 					} else if (operation === 'getMe') {
 						responseData = await closeApiRequest.call(this, 'GET', '/me/');
@@ -2718,8 +3005,10 @@ export class Close implements INodeType {
 				else if (resource === 'customField') {
 					const objectType = this.getNodeParameter('objectType', i) as string;
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/`);
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/${customFieldId}/`);
@@ -2741,8 +3030,10 @@ export class Close implements INodeType {
 				// ── INTEGRATION LINK ──────────────────────────────────────────────────
 				else if (resource === 'integrationLink') {
 					if (operation === 'getAll') {
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
 						const res = await closeApiRequest.call(this, 'GET', '/integration_link/');
-						responseData = res.data || [];
+						const allItems = (res.data || []) as IDataObject[];
+						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get') {
 						const id = this.getNodeParameter('integrationLinkId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/integration_link/${id}/`);
