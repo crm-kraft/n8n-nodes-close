@@ -134,6 +134,18 @@ export class CloseTrigger implements INodeType {
 					},
 				},
 			},
+			{
+				displayName: 'Trigger On',
+				name: 'publishTriggerOn',
+				type: 'options',
+				options: [
+					{ name: 'Every Publish', value: 'every', description: 'Trigger every time the activity is published or re-published' },
+					{ name: 'First Publish Only', value: 'first', description: 'Trigger only when the activity is published for the first time (previous_data.last_published_at is null)' },
+				],
+				default: 'every',
+				displayOptions: { show: { event: ['custom_activity_published'] } },
+				description: 'Whether to trigger on every publish or only the first time the activity is published',
+			},
 		],
 		usableAsTool: true,
 	};
@@ -361,6 +373,21 @@ export class CloseTrigger implements INodeType {
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const bodyData = this.getBodyData() as IDataObject;
+		const event = this.getNodeParameter('event') as string;
+
+		// For custom_activity_published with 'First Publish Only', filter out re-publishes
+		if (event === 'custom_activity_published') {
+			const publishTriggerOn = this.getNodeParameter('publishTriggerOn', 'every') as string;
+			if (publishTriggerOn === 'first') {
+				const previousData = bodyData.previous_data as IDataObject | undefined;
+				const lastPublishedAt = previousData?.last_published_at;
+				// Only proceed if last_published_at was null (first time published)
+				if (lastPublishedAt !== null && lastPublishedAt !== undefined && lastPublishedAt !== '') {
+					return {};
+				}
+			}
+		}
+
 		return {
 			workflowData: [[{ json: bodyData }]],
 		};
