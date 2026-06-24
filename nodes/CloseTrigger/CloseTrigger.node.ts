@@ -142,7 +142,7 @@ export class CloseTrigger implements INodeType {
 					{ name: 'Every Publish', value: 'every', description: 'Trigger every time the activity is published or re-published' },
 					{ name: 'First Publish Only', value: 'first', description: 'Trigger only when the activity is published for the first time (previous_data.last_published_at is null)' },
 				],
-				default: 'every',
+				default: 'first',
 				displayOptions: { show: { event: ['custom_activity_published'] } },
 				description: 'Whether to trigger on every publish or only the first time the activity is published',
 			},
