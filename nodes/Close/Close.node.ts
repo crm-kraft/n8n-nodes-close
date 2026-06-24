@@ -1153,21 +1153,53 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
 			},
 			{
+				displayName: 'Use Email Template',
+				name: 'useTemplate',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to use a saved email template instead of writing subject and body manually',
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Template Name or ID',
+				name: 'emailTemplateId',
+				type: 'options',
+				default: '',
+				required: true,
+				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				typeOptions: { loadOptionsMethod: 'getEmailTemplates' },
+				displayOptions: { show: { resource: ['email'], operation: ['create'], useTemplate: [true] } },
+			},
+			{
 				displayName: 'Subject',
 				name: 'emailSubject',
 				type: 'string',
 				default: '',
-				required: true,
-				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+				required: false,
+				description: 'Email subject line. Not required when using a template.',
+				displayOptions: { show: { resource: ['email'], operation: ['create'], useTemplate: [false] } },
 			},
 			{
-				displayName: 'Body (HTML)',
+				displayName: 'Body Type',
+				name: 'bodyType',
+				type: 'options',
+				options: [
+					{ name: 'HTML', value: 'html' },
+					{ name: 'Plain Text', value: 'text' },
+				],
+				default: 'html',
+				description: 'Whether to send the body as HTML or plain text',
+				displayOptions: { show: { resource: ['email'], operation: ['create'], useTemplate: [false] } },
+			},
+			{
+				displayName: 'Body',
 				name: 'emailBody',
 				type: 'string',
 				typeOptions: { rows: 6 },
 				default: '',
-				required: true,
-				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+				required: false,
+				description: 'Email body content. Use Body Type to switch between HTML and plain text.',
+				displayOptions: { show: { resource: ['email'], operation: ['create'], useTemplate: [false] } },
 			},
 			{
 				displayName: 'Additional Fields',
@@ -1180,7 +1212,6 @@ export class Close implements INodeType {
 					{ displayName: 'CC', name: 'cc', type: 'string', default: '' },
 					{ displayName: 'BCC', name: 'bcc', type: 'string', default: '' },
 					{ displayName: 'Sender (Email)', name: 'sender', type: 'string', default: '' },
-					{ displayName: 'Template ID', name: 'template_id', type: 'string', default: '' },
 				],
 			},
 			{
@@ -2045,6 +2076,13 @@ export class Close implements INodeType {
 					value: u.id as string,
 				}));
 			},
+			async getEmailTemplates(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/email_template/');
+				return (response.data || []).map((t: IDataObject) => ({
+					name: t.name as string,
+					value: t.id as string,
+				}));
+			},
 			async getLeadCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const response = await closeApiRequest.call(this, 'GET', '/custom_field/lead/');
 				return (response.data || []).map((f: IDataObject) => ({
@@ -2698,24 +2736,36 @@ export class Close implements INodeType {
 				}
 				// ── EMAIL ────────────────────────────────────────────────────────────────────
 				else if (resource === 'email') {
-					if (operation === 'create') {
-						const leadId = this.getNodeParameter('emailLeadId', i) as string;
-						const to = this.getNodeParameter('emailTo', i) as string;
-						const subject = this.getNodeParameter('emailSubject', i) as string;
-						const body = this.getNodeParameter('emailBody', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
-						const emailBody: IDataObject = {
-							lead_id: leadId,
-							to: [{ email: to }],
-							subject,
-							body_html: body,
-							status: 'outbox',
-						};
-						if (additionalFields.cc) emailBody.cc = [{ email: additionalFields.cc }];
-						if (additionalFields.bcc) emailBody.bcc = [{ email: additionalFields.bcc }];
-						if (additionalFields.sender) emailBody.sender = additionalFields.sender;
-						if (additionalFields.template_id) emailBody.template_id = additionalFields.template_id;
-						responseData = await closeApiRequest.call(this, 'POST', '/activity/email/', emailBody);
+				if (operation === 'create') {
+					const leadId = this.getNodeParameter('emailLeadId', i) as string;
+					const to = this.getNodeParameter('emailTo', i) as string;
+					const useTemplate = this.getNodeParameter('useTemplate', i, false) as boolean;
+					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+					const emailBody: IDataObject = {
+						lead_id: leadId,
+						to: [{ email: to }],
+						status: 'outbox',
+					};
+					if (useTemplate) {
+						const templateId = this.getNodeParameter('emailTemplateId', i) as string;
+						if (templateId) emailBody.template_id = templateId;
+					} else {
+						const subject = this.getNodeParameter('emailSubject', i, '') as string;
+						const body = this.getNodeParameter('emailBody', i, '') as string;
+						const bodyType = this.getNodeParameter('bodyType', i, 'html') as string;
+						if (subject) emailBody.subject = subject;
+						if (body) {
+							if (bodyType === 'text') {
+								emailBody.body_text = body;
+							} else {
+								emailBody.body_html = body;
+							}
+						}
+					}
+					if (additionalFields.cc) emailBody.cc = [{ email: additionalFields.cc }];
+					if (additionalFields.bcc) emailBody.bcc = [{ email: additionalFields.bcc }];
+					if (additionalFields.sender) emailBody.sender = additionalFields.sender;
+					responseData = await closeApiRequest.call(this, 'POST', '/activity/email/', emailBody);
 					} else if (operation === 'get') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
 						responseData = await closeApiRequest.call(this, 'GET', `/activity/email/${emailId}/`);
