@@ -489,7 +489,15 @@ export class Close implements INodeType {
 				options: [
 					{ displayName: 'Note', name: 'note', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
-																																																	description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getOpportunityStatuses' }, default: '' },
+																																									description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getOpportunityStatuses' }, default: '' },
+					{
+						displayName: 'User Name or ID',
+						name: 'user_id',
+						type: 'options',
+						default: '',
+						description: 'Assign the opportunity to this user. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+						typeOptions: { loadOptionsMethod: 'getUsers' },
+					},
 					{ displayName: 'Value (in Cents)', name: 'value', type: 'number', default: 0 },
 					{ displayName: 'Value Currency', name: 'value_currency', type: 'string', default: 'USD' },
 					{
@@ -505,7 +513,7 @@ export class Close implements INodeType {
 					},
 					{ displayName: 'Close Date', name: 'date_won', type: 'string', default: '' },
 				],
-			},
+				},
 			{
 				displayName: 'Custom Fields',
 				name: 'customFields',
