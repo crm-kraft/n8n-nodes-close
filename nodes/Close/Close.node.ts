@@ -1355,11 +1355,11 @@ export class Close implements INodeType {
 				displayName: 'Activity Type Name or ID',
 				name: 'activityTypeId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'Required to load the correct custom fields. For update, set this to the activity type of the instance you are updating (e.g. from <code>$json.custom_activity_type_id</code>). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: { loadOptionsMethod: 'getCustomActivityTypes' },
 				default: '',
 				required: true,
-				displayOptions: { show: { resource: ['customActivity'], operation: ['create'] } },
+				displayOptions: { show: { resource: ['customActivity'], operation: ['create', 'update'] } },
 			},
 			{
 				displayName: 'Filters',
