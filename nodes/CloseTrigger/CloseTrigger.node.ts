@@ -99,10 +99,9 @@ export class CloseTrigger implements INodeType {
 					{ name: 'Meeting Started', value: 'meeting.started' },
 					{ name: 'Meeting Completed', value: 'meeting.completed' },
 					{ name: 'Meeting Canceled', value: 'meeting.canceled' },
-					// ── Custom Activity (any status) ───────────────────────────
-					{ name: 'Custom Activity Created', value: 'custom_activity.created' },
-					{ name: 'Custom Activity Updated', value: 'custom_activity.updated' },
-					{ name: 'Custom Activity Deleted', value: 'custom_activity.deleted' },
+				// ── Custom Activity (any status) ───────────────────────────
+				{ name: 'Custom Activity Updated', value: 'custom_activity.updated' },
+				{ name: 'Custom Activity Deleted', value: 'custom_activity.deleted' },
 					// ── Custom Activity Published ──────────────────────────────
 					{ name: 'On Custom Activity Published', value: 'custom_activity_published' },
 					// ── Status Changes ────────────────────────────────────────
@@ -128,7 +127,6 @@ export class CloseTrigger implements INodeType {
 				displayOptions: {
 					show: {
 						event: [
-							'custom_activity.created',
 							'custom_activity.updated',
 							'custom_activity.deleted',
 							'custom_activity_published',
@@ -235,21 +233,7 @@ export class CloseTrigger implements INodeType {
 
 				let eventObjects: IDataObject[];
 
-				if (event === 'custom_activity.created') {
-					eventObjects = [{
-						object_type: 'activity.custom_activity',
-						action: 'created',
-						...(actTypeId ? {
-							extra_filter: {
-								type: 'and',
-								filters: [{
-									type: 'field_accessor', field: 'data',
-									filter: { type: 'field_accessor', field: 'custom_activity_type_id', filter: { type: 'equals', value: actTypeId } },
-								}],
-							},
-						} : {}),
-					}];
-				} else if (event === 'custom_activity.updated') {
+				if (event === 'custom_activity.updated') {
 					eventObjects = [{
 						object_type: 'activity.custom_activity',
 						action: 'updated',
