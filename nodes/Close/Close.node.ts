@@ -1773,10 +1773,20 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['user'] } },
 				options: [
-									{ name: 'Get Many', value: 'getAll', action: 'Get many users' },
-				{ name: 'Get Me', value: 'getMe', action: 'Get current user' },
+					{ name: 'Get', value: 'get', action: 'Get a user by ID' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many users' },
+					{ name: 'Get Me', value: 'getMe', action: 'Get current user' },
 			],
 				default: 'getAll',
+			},
+			{
+				displayName: 'User ID',
+				name: 'userId',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'The ID of the user to retrieve (e.g. user_abc123)',
+				displayOptions: { show: { resource: ['user'], operation: ['get'] } },
 			},
 			{
 				displayName: 'Filters',
@@ -2972,7 +2982,10 @@ export class Close implements INodeType {
 
 				// ── USER ──────────────────────────────────────────────────────────────
 				else if (resource === 'user') {
-				if (operation === 'getAll') {
+				if (operation === 'get') {
+					const userId = this.getNodeParameter('userId', i) as string;
+					responseData = await closeApiRequest.call(this, 'GET', `/user/${userId}/`);
+				} else if (operation === 'getAll') {
 					const filters = this.getNodeParameter('filters', i, {}) as IDataObject;
 					const statusFilter = filters.is_active as string | undefined;
 					// The Close API /user/ endpoint only returns active org members.
