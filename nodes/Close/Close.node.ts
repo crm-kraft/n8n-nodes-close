@@ -2236,12 +2236,12 @@ export class Close implements INodeType {
 						}
 						const searchBody: IDataObject = {
 							query: queryObj,
-							results_limit: limit ?? null,
+							_limit: 100, // page size — fetch 100 per request for efficiency
 							sort: (parsed.sort as IDataObject[]) || [],
 							_fields: { lead: ['id', 'display_name', 'name', 'status_id', 'status_label', 'contacts', 'addresses', 'description', 'url', 'date_created', 'date_updated', 'created_by', 'updated_by', 'organization_id', 'opportunities', 'html_url', 'custom'] },
 						};
 						if (returnAll) {
-							// Paginate through all results using cursor-based pagination
+							// Paginate through all results using cursor-based pagination (no results_limit cap)
 							const allLeads: IDataObject[] = [];
 							let cursor: string | undefined;
 							do {
@@ -2253,6 +2253,7 @@ export class Close implements INodeType {
 							} while (cursor);
 							responseData = allLeads;
 						} else {
+							// results_limit caps the total returned; _limit controls page size
 							searchBody.results_limit = limit!;
 							const res = await closeApiRequest.call(this, 'POST', '/data/search/', searchBody);
 							responseData = res.data || [];
