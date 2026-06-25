@@ -2743,7 +2743,7 @@ export class Close implements INodeType {
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const emailBody: IDataObject = {
 						lead_id: leadId,
-						to: [{ email: to }],
+						to: [to],
 						status: 'outbox',
 					};
 					if (useTemplate) {
@@ -2762,8 +2762,8 @@ export class Close implements INodeType {
 							}
 						}
 					}
-					if (additionalFields.cc) emailBody.cc = [{ email: additionalFields.cc }];
-					if (additionalFields.bcc) emailBody.bcc = [{ email: additionalFields.bcc }];
+					if (additionalFields.cc) emailBody.cc = [additionalFields.cc as string];
+					if (additionalFields.bcc) emailBody.bcc = [additionalFields.bcc as string];
 					if (additionalFields.sender) emailBody.sender = additionalFields.sender;
 					responseData = await closeApiRequest.call(this, 'POST', '/activity/email/', emailBody);
 					} else if (operation === 'get') {
