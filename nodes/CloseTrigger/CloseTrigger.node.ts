@@ -99,11 +99,11 @@ export class CloseTrigger implements INodeType {
 					{ name: 'Meeting Started', value: 'meeting.started' },
 					{ name: 'Meeting Completed', value: 'meeting.completed' },
 					{ name: 'Meeting Canceled', value: 'meeting.canceled' },
-				// ── Custom Activity (any status) ───────────────────────────
-				{ name: 'Custom Activity Updated', value: 'custom_activity.updated' },
-				{ name: 'Custom Activity Deleted', value: 'custom_activity.deleted' },
-					// ── Custom Activity Published ──────────────────────────────
-					{ name: 'On Custom Activity Published', value: 'custom_activity_published' },
+					// ── Custom Activity Instance ───────────────────────────────
+					{ name: 'Custom Activity Instance Updated', value: 'custom_activity.updated' },
+					{ name: 'Custom Activity Instance Deleted', value: 'custom_activity.deleted' },
+					// ── Custom Activity Instance Published ─────────────────────
+					{ name: 'On Custom Activity Instance Published', value: 'custom_activity_published' },
 					// ── Status Changes ────────────────────────────────────────
 					{ name: 'Lead Status Changed', value: 'lead_status_change.created' },
 					{ name: 'Opportunity Status Changed', value: 'opportunity_status_change.created' },
@@ -123,7 +123,7 @@ export class CloseTrigger implements INodeType {
 				typeOptions: { loadOptionsMethod: 'getCustomActivityTypes' },
 				required: true,
 				default: '',
-				description: 'The custom activity type to listen for published events on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				description: 'The custom activity type to listen for. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				displayOptions: {
 					show: {
 						event: [
@@ -260,6 +260,7 @@ export class CloseTrigger implements INodeType {
 						} : {}),
 					}];
 				} else if (event === 'custom_activity.deleted') {
+					// On delete, Close sends data: null — must filter on previous_data instead
 					eventObjects = [{
 						object_type: 'activity.custom_activity',
 						action: 'deleted',
@@ -267,7 +268,7 @@ export class CloseTrigger implements INodeType {
 							extra_filter: {
 								type: 'and',
 								filters: [{
-									type: 'field_accessor', field: 'data',
+									type: 'field_accessor', field: 'previous_data',
 									filter: { type: 'field_accessor', field: 'custom_activity_type_id', filter: { type: 'equals', value: actTypeId } },
 								}],
 							},
