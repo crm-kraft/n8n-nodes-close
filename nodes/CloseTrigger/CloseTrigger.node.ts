@@ -109,6 +109,10 @@ export class CloseTrigger implements INodeType {
 					{ name: 'Opportunity Status Changed', value: 'opportunity_status_change.created' },
 					// ── Form Submission ───────────────────────────────────────
 					{ name: 'Form Submission Created', value: 'form_submission.created' },
+					// ── Workflow (Sequence) Subscription ──────────────────────
+					{ name: 'Workflow Subscription Created', value: 'sequence_subscription.created' },
+					{ name: 'Workflow Subscription Updated', value: 'sequence_subscription.updated' },
+					{ name: 'Workflow Subscription Deleted', value: 'sequence_subscription.deleted' },
 					// ── Unsubscribed Email ────────────────────────────────────
 					{ name: 'Email Unsubscribed', value: 'unsubscribed_email.created' },
 					{ name: 'Email Resubscribed', value: 'unsubscribed_email.deleted' },
@@ -134,8 +138,26 @@ export class CloseTrigger implements INodeType {
 					},
 				},
 			},
-			{
-				displayName: 'Trigger On',
+				{
+					displayName: 'Workflow Name or ID',
+					name: 'sequenceId',
+					type: 'options',
+					typeOptions: { loadOptionsMethod: 'getSequences' },
+					required: false,
+					default: '',
+					description: 'Optional: only trigger for a specific workflow. Leave empty to trigger for all workflows. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+					displayOptions: {
+						show: {
+							event: [
+								'sequence_subscription.created',
+								'sequence_subscription.updated',
+								'sequence_subscription.deleted',
+							],
+						},
+					},
+				},
+				{
+					displayName: 'Trigger On',
 				name: 'publishTriggerOn',
 				type: 'options',
 				options: [
@@ -152,6 +174,15 @@ export class CloseTrigger implements INodeType {
 
 	methods = {
 		loadOptions: {
+			async getSequences(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const response = await closeApiRequest.call(this, 'GET', '/sequence/');
+				const sequences = (response.data || []) as IDataObject[];
+				const options: INodePropertyOptions[] = [{ name: '— Any Workflow —', value: '' }];
+				options.push(
+					...sequences.map((s) => ({ name: s.name as string, value: s.id as string })),
+				);
+				return options;
+			},
 			async getCustomActivityTypes(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const response = await closeApiRequest.call(this, 'GET', '/custom_activity/');
 				const types = (response.data || []) as IDataObject[];
@@ -241,6 +272,9 @@ export class CloseTrigger implements INodeType {
 					'form_submission.created': [{ object_type: 'activity.form_submission', action: 'created' }],
 					'unsubscribed_email.created': [{ object_type: 'unsubscribed_email', action: 'created' }],
 					'unsubscribed_email.deleted': [{ object_type: 'unsubscribed_email', action: 'deleted' }],
+					'sequence_subscription.created': [{ object_type: 'sequence_subscription', action: 'created' }],
+					'sequence_subscription.updated': [{ object_type: 'sequence_subscription', action: 'updated' }],
+					'sequence_subscription.deleted': [{ object_type: 'sequence_subscription', action: 'deleted' }],
 				};
 
 				let eventObjects: IDataObject[];
@@ -339,6 +373,28 @@ export class CloseTrigger implements INodeType {
 							},
 						},
 					];
+					} else if (
+						event === 'sequence_subscription.created' ||
+						event === 'sequence_subscription.updated' ||
+						event === 'sequence_subscription.deleted'
+					) {
+						const sequenceId = this.getNodeParameter('sequenceId', '') as string;
+						const action = event.split('.')[1];
+						eventObjects = [{
+							object_type: 'sequence_subscription',
+							action,
+							...(sequenceId ? {
+								extra_filter: {
+									type: 'field_accessor',
+									field: 'data',
+									filter: {
+										type: 'field_accessor',
+										field: 'sequence_id',
+										filter: { type: 'equals', value: sequenceId },
+									},
+								},
+							} : {}),
+						}];
 					} else {
 						const mapped = eventMap[event];
 						if (!mapped) {
