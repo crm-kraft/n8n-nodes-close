@@ -381,6 +381,7 @@ export class Close implements INodeType {
 							],
 						}],
 					},
+					{ displayName: 'Name', name: 'name', type: 'string', default: '', description: 'Full name of the contact' },
 					{ displayName: 'Title', name: 'title', type: 'string', default: '' },
 				],
 			},
@@ -2384,6 +2385,7 @@ export class Close implements INodeType {
 					const contactId = this.getNodeParameter('contactId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const body: IDataObject = {};
+					if (additionalFields.name) body.name = additionalFields.name;
 					if (additionalFields.title) body.title = additionalFields.title;
 					if (additionalFields.phones) {
 						const phoneItems = (additionalFields.phones as IDataObject).phoneValues as IDataObject[] || [];
