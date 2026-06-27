@@ -7,12 +7,8 @@ import {
 	IDataObject,
 	NodeApiError,
 	JsonObject,
+	sleep,
 } from 'n8n-workflow';
-
-// ─── Helper: sleep for ms milliseconds ───────────────────────────────────────
-function sleep(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 // ─── Helper: extract retry-after seconds from a NodeApiError ─────────────────
 function getRetryAfterSeconds(error: unknown): number {
