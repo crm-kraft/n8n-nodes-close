@@ -345,19 +345,38 @@ export class Close implements INodeType {
 						placeholder: 'Add Email',
 						default: {},
 						typeOptions: { multipleValues: true },
-						options: [{
-							name: 'emailValues',
-							displayName: 'Email',
-							values: [
-								{ displayName: 'Email', name: 'email', type: 'string', placeholder: 'name@email.com', default: '' },
-								{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
-									{ name: 'Direct', value: 'direct' },
-									{ name: 'Home', value: 'home' },
-									{ name: 'Office', value: 'office' },
-									{ name: 'Other', value: 'other' },
-								]},
-							],
-						}],
+						options: [
+							{
+								name: 'emailValues',
+								displayName: 'Email',
+								values: [
+									{ displayName: 'Email', name: 'email', type: 'string', placeholder: 'name@email.com', default: '' },
+									{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
+										{ name: 'Direct', value: 'direct' },
+										{ name: 'Home', value: 'home' },
+										{ name: 'Office', value: 'office' },
+										{ name: 'Other', value: 'other' },
+									]},
+								],
+							},
+							{
+								name: 'updateMode',
+								displayName: 'Update Mode',
+								values: [
+									{
+										displayName: 'Email Update Mode',
+										name: 'emailUpdateMode',
+										type: 'options',
+										default: 'add',
+										description: 'Whether to add the new email(s) to the existing list (highest priority) or replace all existing emails',
+										options: [
+											{ name: 'Add (Keep Existing)', value: 'add', description: 'Prepend new email(s) to the existing list — new email gets highest priority' },
+											{ name: 'Replace (Overwrite)', value: 'replace', description: 'Replace all existing emails with the new email(s)' },
+										],
+									},
+								],
+							},
+						],
 					},
 					{
 						displayName: 'Phone Numbers',
@@ -2393,7 +2412,22 @@ export class Close implements INodeType {
 					}
 					if (additionalFields.emails) {
 						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
-						if (emailItems.length) body.emails = emailItems.map((e) => ({ email: e.email, type: e.type }));
+						const updateModeArr = (additionalFields.emails as IDataObject).updateMode as IDataObject[] || [];
+						const emailUpdateMode = updateModeArr.length > 0 ? (updateModeArr[0].emailUpdateMode as string) : 'add';
+						if (emailItems.length) {
+							const newEmails = emailItems.map((e) => ({ email: e.email, type: e.type }));
+							if (emailUpdateMode === 'replace') {
+								body.emails = newEmails;
+							} else {
+								// Add mode: fetch existing contact, prepend new emails at the front (highest priority)
+								const existing = await closeApiRequest.call(this, 'GET', `/contact/${contactId}/`);
+								const existingEmails = (existing.emails || []) as IDataObject[];
+								// Deduplicate: skip new emails already present
+								const existingAddresses = new Set(existingEmails.map((e) => (e.email as string).toLowerCase()));
+								const deduped = newEmails.filter((e) => !existingAddresses.has((e.email as string).toLowerCase()));
+								body.emails = [...deduped, ...existingEmails];
+							}
+						}
 					}
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
