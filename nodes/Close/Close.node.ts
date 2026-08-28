@@ -1994,6 +1994,8 @@ export class Close implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['customField'] } },
 				options: [
+					{ name: 'Add Dropdown Option', value: 'addChoice', action: 'Add an option to a dropdown custom field' },
+					{ name: 'Associate Shared Field', value: 'associateShared', action: 'Associate a shared custom field with an object type' },
 					{ name: 'Create', value: 'create', action: 'Create a custom field' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a custom field' },
 					{ name: 'Get', value: 'get', action: 'Get a custom field' },
@@ -2010,7 +2012,7 @@ export class Close implements INodeType {
 					{ name: 'Contact', value: 'contact' },
 					{ name: 'Lead', value: 'lead' },
 					{ name: 'Opportunity', value: 'opportunity' },
-					{ name: 'Shared', value: 'shared' },
+					{ name: 'Shared Field', value: 'shared' },
 				],
 				default: 'lead',
 				required: true,
@@ -2022,7 +2024,7 @@ export class Close implements INodeType {
 				type: 'string',
 				default: '',
 				required: true,
-				displayOptions: { show: { resource: ['customField'], operation: ['get', 'update', 'delete'] } },
+				displayOptions: { show: { resource: ['customField'], operation: ['get', 'update', 'delete', 'addChoice', 'associateShared'] } },
 			},
 			{
 				displayName: 'Name',
@@ -2050,6 +2052,58 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customField'], operation: ['create'] } },
 			},
 			{
+				displayName: 'Dropdown Options',
+				name: 'choiceValues',
+				type: 'fixedCollection',
+				placeholder: 'Add Option',
+				default: {},
+				typeOptions: { multipleValues: true },
+				displayOptions: { show: { resource: ['customField'], operation: ['create'], fieldType: ['choices'] } },
+				options: [
+					{
+						name: 'values',
+						displayName: 'Option',
+						values: [
+							{ displayName: 'Option', name: 'value', type: 'string', default: '', required: true },
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Object Types to Associate',
+				name: 'sharedFieldAssociations',
+				type: 'multiOptions',
+				default: [],
+				description: 'The object types that can use the Shared Custom Field. You can add further associations in Close later.',
+				options: [
+					{ name: 'Contact', value: 'contact' },
+					{ name: 'Lead', value: 'lead' },
+					{ name: 'Opportunity', value: 'opportunity' },
+				],
+				displayOptions: { show: { resource: ['customField'], operation: ['create'], objectType: ['shared'] } },
+			},
+			{
+				displayName: 'Object Type to Associate',
+				name: 'sharedFieldAssociationType',
+				type: 'options',
+				default: 'lead',
+				options: [
+					{ name: 'Contact', value: 'contact' },
+					{ name: 'Lead', value: 'lead' },
+					{ name: 'Opportunity', value: 'opportunity' },
+				],
+				displayOptions: { show: { resource: ['customField'], operation: ['associateShared'], objectType: ['shared'] } },
+			},
+			{
+				displayName: 'Dropdown Option',
+				name: 'choiceValue',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'The new allowed value to add to the dropdown custom field. Existing options are preserved.',
+				displayOptions: { show: { resource: ['customField'], operation: ['addChoice'] } },
+			},
+			{
 				displayName: 'Additional Fields',
 				name: 'additionalFields',
 				type: 'collection',
@@ -2058,7 +2112,7 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['customField'], operation: ['update'] } },
 				options: [
 					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
-										{ displayName: 'Description', name: 'description', type: 'string', default: '' },
+											{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 				],
 				},
 				{
@@ -3283,7 +3337,55 @@ export class Close implements INodeType {
 					} else if (operation === 'create') {
 						const name = this.getNodeParameter('name', i) as string;
 						const fieldType = this.getNodeParameter('fieldType', i) as string;
-						responseData = await closeApiRequest.call(this, 'POST', `/custom_field/${objectType}/`, { name, type: fieldType });
+						const body: IDataObject = { name, type: fieldType };
+						if (fieldType === 'choices') {
+							const choiceValues = this.getNodeParameter('choiceValues', i, {}) as IDataObject;
+							const values = (choiceValues.values as IDataObject[]) || [];
+							const choices = values.map((choice) => choice.value as string).filter((choice) => choice.length > 0);
+							if (choices.length === 0) {
+								throw new NodeOperationError(this.getNode(), 'At least one Dropdown Option is required when creating a Choices custom field', { itemIndex: i });
+							}
+							body.choices = choices;
+						}
+						const createdField = await closeApiRequest.call(this, 'POST', `/custom_field/${objectType}/`, body) as IDataObject;
+						if (objectType === 'shared') {
+							const associations = this.getNodeParameter('sharedFieldAssociations', i, []) as string[];
+							for (const association of associations) {
+								await closeApiRequest.call(this, 'POST', `/custom_field/shared/${createdField.id as string}/association/`, {
+									object_type: association,
+									required: false,
+								});
+							}
+						}
+						responseData = createdField;
+					} else if (operation === 'associateShared') {
+						if (objectType !== 'shared') {
+							throw new NodeOperationError(this.getNode(), 'Associate Shared Field is only available when Object Type is Shared Field', { itemIndex: i });
+						}
+						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
+						const associationType = this.getNodeParameter('sharedFieldAssociationType', i) as string;
+						responseData = await closeApiRequest.call(this, 'POST', `/custom_field/shared/${customFieldId}/association/`, {
+							object_type: associationType,
+							required: false,
+						});
+					} else if (operation === 'addChoice') {
+						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
+						const choiceValue = (this.getNodeParameter('choiceValue', i) as string).trim();
+						if (!choiceValue) {
+							throw new NodeOperationError(this.getNode(), 'Dropdown Option cannot be empty', { itemIndex: i });
+						}
+						const customField = await closeApiRequest.call(this, 'GET', `/custom_field/${objectType}/${customFieldId}/`) as IDataObject;
+						if (customField.type !== 'choices') {
+							throw new NodeOperationError(this.getNode(), 'Add Dropdown Option is only available for Custom Fields with the Choices type', { itemIndex: i });
+						}
+						const choices = ((customField.choices || []) as string[]).map((choice) => choice.trim());
+						if (choices.some((choice) => choice.toLowerCase() === choiceValue.toLowerCase())) {
+							responseData = customField;
+						} else {
+							responseData = await closeApiRequest.call(this, 'PUT', `/custom_field/${objectType}/${customFieldId}/`, {
+								choices: [...choices, choiceValue],
+							});
+						}
 					} else if (operation === 'update') {
 						const customFieldId = this.getNodeParameter('customFieldId', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
