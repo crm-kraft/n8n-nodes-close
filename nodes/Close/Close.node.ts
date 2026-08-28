@@ -1964,7 +1964,7 @@ export class Close implements INodeType {
 							{ name: 'Active', value: 'true' },
 							{ name: 'Inactive', value: 'false' },
 						],
-												description: 'Filter users by active/inactive status',
+													description: 'Close has no server-side status filter. Active returns users with organization membership; Inactive returns inactive organization memberships.',
 					},
 				],
 				},
@@ -3311,13 +3311,16 @@ export class Close implements INodeType {
 							}
 						}
 						responseData = inactiveUsers;
-					} else {
-						// Active or All: /user/ endpoint returns only active members
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-						const res = await closeApiRequest.call(this, 'GET', '/user/');
-						const allItems = (res.data || []) as IDataObject[];
-						responseData = returnAll ? allItems : allItems.slice(0, this.getNodeParameter('limit', i) as number);
-					}
+						} else {
+							const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+							const res = await closeApiRequest.call(this, 'GET', '/user/');
+							const allItems = (res.data || []) as IDataObject[];
+							// The Close endpoint has no active-status parameter. Active users have one or more organization IDs.
+							const filteredItems = statusFilter === 'true'
+								? allItems.filter((user) => Array.isArray(user.organizations) && user.organizations.length > 0)
+								: allItems;
+							responseData = returnAll ? filteredItems : filteredItems.slice(0, this.getNodeParameter('limit', i) as number);
+						}
 					} else if (operation === 'getMe') {
 						responseData = await closeApiRequest.call(this, 'GET', '/me/');
 					}
