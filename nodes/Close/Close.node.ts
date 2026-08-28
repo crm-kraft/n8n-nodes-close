@@ -1164,6 +1164,34 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['email'], operation: ['create', 'getAll'] } },
 			},
 			{
+				displayName: 'Contact ID',
+				name: 'emailContactId',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'The Close contact that will receive and be associated with this email. Required when rendering an email template.',
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Sender User Name or ID',
+				name: 'emailUserId',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				required: true,
+				description: 'The Close user who sends the email. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
+				displayName: 'Sender Email',
+				name: 'emailSender',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'The connected sender address to use. The selected user must be authorized to send from this email address in Close.',
+				displayOptions: { show: { resource: ['email'], operation: ['create'] } },
+			},
+			{
 				displayName: 'To',
 				name: 'emailTo',
 				type: 'string',
@@ -1229,9 +1257,8 @@ export class Close implements INodeType {
 				default: {},
 				displayOptions: { show: { resource: ['email'], operation: ['create', 'update'] } },
 				options: [
-					{ displayName: 'CC', name: 'cc', type: 'string', default: '' },
 					{ displayName: 'BCC', name: 'bcc', type: 'string', default: '' },
-					{ displayName: 'Sender (Email)', name: 'sender', type: 'string', default: '' },
+					{ displayName: 'CC', name: 'cc', type: 'string', default: '' },
 				],
 			},
 			{
@@ -2775,11 +2802,17 @@ export class Close implements INodeType {
 				else if (resource === 'email') {
 				if (operation === 'create') {
 					const leadId = this.getNodeParameter('emailLeadId', i) as string;
+					const contactId = this.getNodeParameter('emailContactId', i) as string;
+					const userId = this.getNodeParameter('emailUserId', i) as string;
+					const sender = this.getNodeParameter('emailSender', i) as string;
 					const to = this.getNodeParameter('emailTo', i) as string;
 					const useTemplate = this.getNodeParameter('useTemplate', i, false) as boolean;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const emailBody: IDataObject = {
 						lead_id: leadId,
+						contact_id: contactId,
+						user_id: userId,
+						sender,
 						to: [to],
 						status: 'outbox',
 					};
@@ -2801,7 +2834,6 @@ export class Close implements INodeType {
 					}
 					if (additionalFields.cc) emailBody.cc = [additionalFields.cc as string];
 					if (additionalFields.bcc) emailBody.bcc = [additionalFields.bcc as string];
-					if (additionalFields.sender) emailBody.sender = additionalFields.sender;
 					responseData = await closeApiRequest.call(this, 'POST', '/activity/email/', emailBody);
 					} else if (operation === 'get') {
 						const emailId = this.getNodeParameter('emailId', i) as string;
