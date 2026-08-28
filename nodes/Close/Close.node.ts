@@ -404,20 +404,39 @@ export class Close implements INodeType {
 						placeholder: 'Add Phone',
 						default: {},
 						typeOptions: { multipleValues: true },
-						options: [{
-							name: 'phoneValues',
-							displayName: 'Phone',
-							values: [
-								{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
-								{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
-									{ name: 'Direct', value: 'direct' },
-									{ name: 'Home', value: 'home' },
-									{ name: 'Mobile', value: 'mobile' },
-									{ name: 'Office', value: 'office' },
-									{ name: 'Other', value: 'other' },
-								]},
+							options: [
+								{
+									name: 'phoneValues',
+									displayName: 'Phone',
+									values: [
+										{ displayName: 'Phone', name: 'phone', type: 'string', default: '' },
+										{ displayName: 'Type', name: 'type', type: 'options', default: 'office', options: [
+											{ name: 'Direct', value: 'direct' },
+											{ name: 'Home', value: 'home' },
+											{ name: 'Mobile', value: 'mobile' },
+											{ name: 'Office', value: 'office' },
+											{ name: 'Other', value: 'other' },
+										]},
+									],
+								},
+								{
+									name: 'updateMode',
+									displayName: 'Update Mode',
+									values: [
+										{
+											displayName: 'Phone Update Mode',
+											name: 'phoneUpdateMode',
+											type: 'options',
+											default: 'add',
+											description: 'Whether to add the new phone number(s) to the existing list or replace all existing phone numbers',
+											options: [
+												{ name: 'Add (Keep Existing)', value: 'add', description: 'Prepend new phone number(s) to the existing list and skip duplicates' },
+												{ name: 'Replace (Overwrite)', value: 'replace', description: 'Replace all existing phone numbers with the new phone number(s)' },
+											],
+										},
+									],
+								},
 							],
-						}],
 					},
 					{ displayName: 'Name', name: 'name', type: 'string', default: '', description: 'Full name of the contact' },
 					{ displayName: 'Title', name: 'title', type: 'string', default: '' },
@@ -2501,29 +2520,58 @@ export class Close implements INodeType {
 					const body: IDataObject = {};
 					if (additionalFields.name) body.name = additionalFields.name;
 					if (additionalFields.title) body.title = additionalFields.title;
-					if (additionalFields.phones) {
-						const phoneItems = (additionalFields.phones as IDataObject).phoneValues as IDataObject[] || [];
-						if (phoneItems.length) body.phones = phoneItems.map((p) => ({ phone: p.phone, type: p.type }));
-					}
-					if (additionalFields.emails) {
-						const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
-						const updateModeArr = (additionalFields.emails as IDataObject).updateMode as IDataObject[] || [];
-						const emailUpdateMode = updateModeArr.length > 0 ? (updateModeArr[0].emailUpdateMode as string) : 'add';
-						if (emailItems.length) {
-							const newEmails = emailItems.map((e) => ({ email: e.email, type: e.type }));
-							if (emailUpdateMode === 'replace') {
-								body.emails = newEmails;
-							} else {
-								// Add mode: fetch existing contact, prepend new emails at the front (highest priority)
-								const existing = await closeApiRequest.call(this, 'GET', `/contact/${contactId}/`);
-								const existingEmails = (existing.emails || []) as IDataObject[];
-								// Deduplicate: skip new emails already present
-								const existingAddresses = new Set(existingEmails.map((e) => (e.email as string).toLowerCase()));
-								const deduped = newEmails.filter((e) => !existingAddresses.has((e.email as string).toLowerCase()));
-								body.emails = [...deduped, ...existingEmails];
+						let existingContact: IDataObject | undefined;
+						const getExistingContact = async (): Promise<IDataObject> => {
+							if (!existingContact) {
+								existingContact = await closeApiRequest.call(this, 'GET', `/contact/${contactId}/`);
+							}
+							return existingContact as IDataObject;
+						};
+						if (additionalFields.phones) {
+							const phoneItems = (additionalFields.phones as IDataObject).phoneValues as IDataObject[] || [];
+							const updateModeArr = (additionalFields.phones as IDataObject).updateMode as IDataObject[] || [];
+							const phoneUpdateMode = updateModeArr.length > 0 ? (updateModeArr[0].phoneUpdateMode as string) : 'add';
+							if (phoneItems.length) {
+								const newPhones = phoneItems.map((p) => ({ phone: p.phone, type: p.type }));
+								if (phoneUpdateMode === 'replace') {
+									body.phones = newPhones;
+								} else {
+									const existing = await getExistingContact();
+									const existingPhones = (existing.phones || []) as IDataObject[];
+									const existingNumbers = new Set(existingPhones.map((phone) => String(phone.phone || '').replace(/[^\d+]/g, '')));
+									const deduped = newPhones.filter((phone) => {
+										const number = String(phone.phone || '').replace(/[^\d+]/g, '');
+										if (existingNumbers.has(number)) return false;
+										existingNumbers.add(number);
+										return true;
+									});
+									body.phones = [...deduped, ...existingPhones];
+								}
 							}
 						}
-					}
+						if (additionalFields.emails) {
+							const emailItems = (additionalFields.emails as IDataObject).emailValues as IDataObject[] || [];
+							const updateModeArr = (additionalFields.emails as IDataObject).updateMode as IDataObject[] || [];
+							const emailUpdateMode = updateModeArr.length > 0 ? (updateModeArr[0].emailUpdateMode as string) : 'add';
+							if (emailItems.length) {
+								const newEmails = emailItems.map((e) => ({ email: e.email, type: e.type }));
+								if (emailUpdateMode === 'replace') {
+									body.emails = newEmails;
+								} else {
+									// Add mode: fetch existing contact, prepend new emails at the front (highest priority).
+									const existing = await getExistingContact();
+									const existingEmails = (existing.emails || []) as IDataObject[];
+									const existingAddresses = new Set(existingEmails.map((email) => String(email.email || '').toLowerCase()));
+									const deduped = newEmails.filter((email) => {
+										const address = String(email.email || '').toLowerCase();
+										if (existingAddresses.has(address)) return false;
+										existingAddresses.add(address);
+										return true;
+									});
+									body.emails = [...deduped, ...existingEmails];
+								}
+							}
+						}
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
