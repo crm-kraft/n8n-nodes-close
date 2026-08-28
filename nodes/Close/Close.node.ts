@@ -2292,39 +2292,47 @@ export class Close implements INodeType {
 					value: f.id as string,
 				}));
 			},
-			async getCustomActivityCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				// Load fields from the selected activity type (inline in /custom_activity/ response)
-				const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
-				const resp = await closeApiRequest.call(this, 'GET', '/custom_activity/');
-				const allTypes: IDataObject[] = resp.data || [];
-				if (!activityTypeId) return [];
-				const matchedType = allTypes.find((t: IDataObject) => t.id === activityTypeId);
-				const fields: IDataObject[] = (matchedType?.fields as IDataObject[]) || [];
-				return fields.map((f: IDataObject) => ({
-					name: f.name as string,
-					value: f.id as string,
-				}));
-			},
-			async getCustomActivityFieldsForFilter(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				// Read the selected activity type from the Filters collection
-				// If no type is selected, return empty — fields are type-specific
-				let activityTypeId: string | undefined;
-				try {
-					const filtersParam = this.getNodeParameter('filters') as IDataObject;
-					activityTypeId = filtersParam?.custom_activity_type_id as string | undefined;
-				} catch {
-					activityTypeId = undefined;
-				}
-				if (!activityTypeId) return [];
-				const resp = await closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { _limit: 200 });
-				const allFields: IDataObject[] = resp.data || [];
-				return allFields
-					.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId)
-					.map((f: IDataObject) => ({
-						name: f.name as string,
-						value: f.id as string,
+				async getCustomActivityCustomFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+					const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
+					if (!activityTypeId) return [];
+					const [activityType, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', `/custom_activity/${activityTypeId}/`),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const typeFields = (activityType.fields || []) as IDataObject[];
+					const sharedFields = filterSharedFields(sharedResp.data || [], 'custom_activity_type', activityTypeId);
+					const fields = [...typeFields, ...sharedFields].filter((field, index, allFields) =>
+						allFields.findIndex((candidate) => candidate.id === field.id) === index,
+					);
+					return fields.map((field: IDataObject) => ({
+						name: field.name as string,
+						value: field.id as string,
 					}));
-			},
+				},
+				async getCustomActivityFieldsForFilter(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+					// Read the selected activity type from the Filters collection.
+					let activityTypeId: string | undefined;
+					try {
+						const filtersParam = this.getNodeParameter('filters') as IDataObject;
+						activityTypeId = filtersParam?.custom_activity_type_id as string | undefined;
+					} catch {
+						activityTypeId = undefined;
+					}
+					if (!activityTypeId) return [];
+					const [activityType, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', `/custom_activity/${activityTypeId}/`),
+						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
+					]);
+					const typeFields = (activityType.fields || []) as IDataObject[];
+					const sharedFields = filterSharedFields(sharedResp.data || [], 'custom_activity_type', activityTypeId);
+					const fields = [...typeFields, ...sharedFields].filter((field, index, allFields) =>
+						allFields.findIndex((candidate) => candidate.id === field.id) === index,
+					);
+					return fields.map((field: IDataObject) => ({
+						name: field.name as string,
+						value: field.id as string,
+					}));
+				},
 		},
 
 			resourceMapping: {
@@ -2356,19 +2364,19 @@ export class Close implements INodeType {
 					return buildResourceMapperFields([...oppFields, ...sharedForOpp]);
 				},
 				async getCustomActivityCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-					// Fetch all activity custom fields and filter client-side by custom_activity_type_id
-					// (the API does not support server-side filtering by custom_activity_type_id)
 					const activityTypeId = this.getCurrentNodeParameter('activityTypeId', { extractValue: true }) as string | undefined;
 					if (!activityTypeId) return { fields: [] };
-					const [actResp, sharedResp] = await Promise.all([
-						closeApiRequest.call(this, 'GET', '/custom_field/activity/', {}, { _limit: 200 }),
+					// The selected type endpoint is the authoritative source for all of its regular fields.
+					const [activityType, sharedResp] = await Promise.all([
+						closeApiRequest.call(this, 'GET', `/custom_activity/${activityTypeId}/`),
 						closeApiRequest.call(this, 'GET', '/custom_field/shared/'),
 					]);
-					const allActFields: IDataObject[] = actResp.data || [];
-					// Filter to only fields belonging to the selected activity type
-					const actFields = allActFields.filter((f: IDataObject) => f.custom_activity_type_id === activityTypeId);
+					const typeFields = (activityType.fields || []) as IDataObject[];
 					const sharedFields = filterSharedFields(sharedResp.data || [], 'custom_activity_type', activityTypeId);
-					return buildResourceMapperFields([...actFields, ...sharedFields]);
+					const fields = [...typeFields, ...sharedFields].filter((field, index, allFields) =>
+						allFields.findIndex((candidate) => candidate.id === field.id) === index,
+					);
+					return buildResourceMapperFields(fields);
 				},
 			},
 	};
