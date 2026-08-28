@@ -82,6 +82,25 @@ function filterSharedFields(sharedFields: IDataObject[], objectType: string, act
 	});
 }
 
+function parseSmartViewQuery(value: unknown, context: IExecuteFunctions, itemIndex: number): IDataObject {
+	if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+		return value as IDataObject;
+	}
+
+	if (typeof value === 'string') {
+		try {
+			const parsed = JSON.parse(value);
+			if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+				return parsed as IDataObject;
+			}
+		} catch {
+			// Throw the same validation error below for malformed JSON.
+		}
+	}
+
+	throw new NodeOperationError(context.getNode(), 'Query (JSON) must be a valid JSON object', { itemIndex });
+}
+
 export class Close implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Close',
@@ -1805,13 +1824,55 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['smartView'], operation: ['create'] } },
 			},
 			{
+				displayName: 'Owner Name or ID',
+				name: 'smartViewOwnerId',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description: 'The Close user who owns this Smart View. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				displayOptions: { show: { resource: ['smartView'], operation: ['create', 'update'] } },
+			},
+			{
 				displayName: 'Query (JSON)',
 				name: 's_query',
-				type: 'string',
+				type: 'json',
 				default: '',
 				required: true,
 				displayOptions: { show: { resource: ['smartView'], operation: ['create'] } },
-				description: 'Structured query JSON for the smart view (see Close API advanced filtering docs)',
+				description: 'Structured Smart View query. You can enter JSON directly or use an expression that returns a JSON object.',
+			},
+			{
+				displayName: 'Sharing Settings',
+				name: 'sharingSettings',
+				type: 'collection',
+				placeholder: 'Add Sharing Setting',
+				default: {},
+				displayOptions: { show: { resource: ['smartView'], operation: ['create', 'update'] } },
+				options: [
+					{
+						displayName: 'Share with Entire Organization',
+						name: 'whole_org',
+						type: 'boolean',
+						default: false,
+						description: 'Whether every user in the Close organization can access this Smart View',
+					},
+					{
+						displayName: 'Share with Groups',
+						name: 'group_ids',
+						type: 'multiOptions',
+						typeOptions: { loadOptionsMethod: 'getGroups' },
+						default: [],
+						description: 'The Close groups that can access this Smart View. Updating sharing replaces the previous group and user recipients.',
+					},
+					{
+						displayName: 'Share with Users',
+						name: 'user_ids',
+						type: 'multiOptions',
+						typeOptions: { loadOptionsMethod: 'getUsers' },
+						default: [],
+						description: 'The individual Close users who can access this Smart View. Updating sharing replaces the previous group and user recipients.',
+					},
+				],
 			},
 			{
 				displayName: 'Additional Fields',
@@ -1821,8 +1882,8 @@ export class Close implements INodeType {
 				default: {},
 				displayOptions: { show: { resource: ['smartView'], operation: ['update'] } },
 				options: [
-					{ displayName: 'Name', name: 'name', type: 'string', default: '' },
-										{ displayName: 'Query (JSON)', name: 's_query', type: 'string', default: '' },
+						{ displayName: 'Name', name: 'name', type: 'string', default: '' },
+						{ displayName: 'Query (JSON)', name: 's_query', type: 'json', default: '' },
 				],
 				},
 				{
@@ -2116,14 +2177,21 @@ export class Close implements INodeType {
 					value: t.id as string,
 				}));
 			},
-			async getUsers(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				const response = await closeApiRequest.call(this, 'GET', '/user/');
-				return (response.data || []).map((u: IDataObject) => ({
-					name: `${u.first_name} ${u.last_name}`.trim() || (u.email as string),
-					value: u.id as string,
-				}));
-			},
-			async getEmailTemplates(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+							async getUsers(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+					const response = await closeApiRequest.call(this, 'GET', '/user/');
+					return (response.data || []).map((u: IDataObject) => ({
+						name: `${u.first_name} ${u.last_name}`.trim() || (u.email as string),
+						value: u.id as string,
+					}));
+				},
+				async getGroups(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+					const response = await closeApiRequest.call(this, 'GET', '/group/', {}, { _fields: 'name' });
+					return (response.data || []).map((group: IDataObject) => ({
+						name: group.name as string,
+						value: group.id as string,
+					}));
+				},
+				async getEmailTemplates(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const response = await closeApiRequest.call(this, 'GET', '/email_template/');
 				return (response.data || []).map((t: IDataObject) => ({
 					name: t.name as string,
@@ -3071,25 +3139,37 @@ export class Close implements INodeType {
 						responseData = await closeApiRequestAllItems.call(this, 'GET', '/lead/', {}, { saved_search_id: smartViewId });
 					} else if (operation === 'create') {
 						const name = this.getNodeParameter('name', i) as string;
-						const s_query_raw = this.getNodeParameter('s_query', i) as string;
-						let s_query: IDataObject;
-						try {
-							s_query = JSON.parse(s_query_raw);
-						} catch {
-							throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
+						const smartViewOwnerId = this.getNodeParameter('smartViewOwnerId', i, '') as string;
+						const sharingSettings = this.getNodeParameter('sharingSettings', i, {}) as IDataObject;
+						const sQueryValue = this.getNodeParameter('s_query', i);
+						const body: IDataObject = {
+							name,
+							s_query: parseSmartViewQuery(sQueryValue, this, i),
+						};
+						if (smartViewOwnerId) body.user_id = smartViewOwnerId;
+						if (Object.keys(sharingSettings).length > 0) {
+							body.sharing_settings = {
+								whole_org: sharingSettings.whole_org === true,
+								group_ids: (sharingSettings.group_ids as string[]) || [],
+								user_ids: (sharingSettings.user_ids as string[]) || [],
+							};
 						}
-						responseData = await closeApiRequest.call(this, 'POST', '/saved_search/', { name, s_query });
+						responseData = await closeApiRequest.call(this, 'POST', '/saved_search/', body);
 					} else if (operation === 'update') {
 						const smartViewId = this.getNodeParameter('smartViewId', i) as string;
+						const smartViewOwnerId = this.getNodeParameter('smartViewOwnerId', i, '') as string;
+						const sharingSettings = this.getNodeParameter('sharingSettings', i, {}) as IDataObject;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 						const body: IDataObject = {};
 						if (additionalFields.name) body.name = additionalFields.name;
-						if (additionalFields.s_query) {
-							try {
-								body.s_query = JSON.parse(additionalFields.s_query as string);
-							} catch {
-								throw new NodeOperationError(this.getNode(), 'Query (JSON) must be valid JSON', { itemIndex: i });
-							}
+						if (additionalFields.s_query) body.s_query = parseSmartViewQuery(additionalFields.s_query, this, i);
+						if (smartViewOwnerId) body.user_id = smartViewOwnerId;
+						if (Object.keys(sharingSettings).length > 0) {
+							body.sharing_settings = {
+								whole_org: sharingSettings.whole_org === true,
+								group_ids: (sharingSettings.group_ids as string[]) || [],
+								user_ids: (sharingSettings.user_ids as string[]) || [],
+							};
 						}
 						responseData = await closeApiRequest.call(this, 'PUT', `/saved_search/${smartViewId}/`, body);
 					} else if (operation === 'delete') {
