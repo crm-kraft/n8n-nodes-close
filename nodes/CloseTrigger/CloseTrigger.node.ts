@@ -162,11 +162,11 @@ export class CloseTrigger implements INodeType {
 				type: 'options',
 				options: [
 					{ name: 'Every Publish', value: 'every', description: 'Trigger every time the activity is published or re-published' },
-					{ name: 'First Publish Only', value: 'first', description: 'Trigger only when the activity is published for the first time (previous_data.last_published_at is null)' },
+					{ name: 'First Publish Only', value: 'first', description: 'Trigger only for the initial publication, excluding re-publishes and updates consolidated more than one minute after event creation' },
 				],
 				default: 'first',
 				displayOptions: { show: { event: ['custom_activity_published'] } },
-				description: 'Whether to trigger on every publish or only the first time the activity is published',
+				description: 'Whether to trigger on every publish or only the first initial publication event',
 			},
 		],
 		usableAsTool: true,
@@ -433,13 +433,23 @@ export class CloseTrigger implements INodeType {
 		const event = this.getNodeParameter('event') as string;
 
 		// For custom_activity_published with 'First Publish Only', filter out re-publishes
+		// and later updates that Close consolidates into the original publication event.
 		if (event === 'custom_activity_published') {
 			const publishTriggerOn = this.getNodeParameter('publishTriggerOn', 'every') as string;
 			if (publishTriggerOn === 'first') {
-				const previousData = bodyData.previous_data as IDataObject | undefined;
+				// Close sends the Event Log entry under `event`; accept a direct event too for compatibility.
+				const closeEvent = (bodyData.event ?? bodyData) as IDataObject;
+				const previousData = closeEvent.previous_data as IDataObject | undefined;
 				const lastPublishedAt = previousData?.last_published_at;
-				// Only proceed if last_published_at was null (first time published)
 				if (lastPublishedAt !== null && lastPublishedAt !== undefined && lastPublishedAt !== '') {
+					return {};
+				}
+
+				// Event consolidation retains date_created and changes date_updated. Emit only when
+				// date_updated occurs within one minute of date_created for the first-publish trigger.
+				const createdAt = Date.parse(String(closeEvent.date_created ?? ''));
+				const updatedAt = Date.parse(String(closeEvent.date_updated ?? ''));
+				if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt) || updatedAt >= createdAt + 60_000) {
 					return {};
 				}
 			}
