@@ -2701,15 +2701,14 @@ export class Close implements INodeType {
 					const opportunityId = this.getNodeParameter('opportunityId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const updBody: IDataObject = { ...additionalFields };
-				const cfMapperUpd = this.getNodeParameter('customFields', i, {}) as IDataObject;
-				const cfValueUpd = cfMapperUpd?.value as IDataObject | null;
-				if (cfValueUpd) {
-					for (const [k, v] of Object.entries(cfValueUpd)) {
-						if (v !== null && v !== undefined && v !== '') {
-							updBody[k] = v;
+					const cfMapperUpd = this.getNodeParameter('customFields', i, {}) as IDataObject;
+					const cfValueUpd = (cfMapperUpd?.value ?? {}) as IDataObject;
+					for (const [fieldId, value] of Object.entries(cfValueUpd)) {
+						if (value !== null && value !== undefined && value !== '') {
+							// Close accepts custom field updates only with a custom.{fieldId} request key.
+							updBody[`custom.${fieldId}`] = value;
 						}
 					}
-				}
 				responseData = await closeApiRequest.call(this, 'PUT', `/opportunity/${opportunityId}/`, updBody);
 					} else if (operation === 'upsert') {
 						const leadId = this.getNodeParameter('leadId', i) as string;
