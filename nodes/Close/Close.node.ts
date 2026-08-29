@@ -33,11 +33,12 @@ function buildResourceMapperFields(fields: IDataObject[]): ResourceMapperFields 
 			fieldType === 'choices' ||
 			fieldType === 'choice' ||
 			fieldType === 'multiple_choice' ||
-			fieldType === 'multiselect' ||
-			(f.choices !== null && f.choices !== undefined)
+			fieldType === 'multiselect'
 		) {
 			type = 'options';
-			// choices is a plain string array: ["Option A", "Option B"]
+			// Only Close choice types are dropdowns. Text and other field types can expose
+			// a `choices` property with an empty/null value, but must remain text inputs.
+			// Choices is a plain string array: ["Option A", "Option B"]
 			const rawChoices = f.choices as (string | IDataObject)[] | null;
 			if (rawChoices && rawChoices.length > 0) {
 				options = rawChoices.map((c) => {
