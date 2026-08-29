@@ -3300,8 +3300,12 @@ export class Close implements INodeType {
 					// Inactive users are stored in org.inactive_memberships.
 					if (statusFilter === 'false') {
 						// Inactive users: fetch from organization.inactive_memberships
-						const me = await closeApiRequest.call(this, 'GET', '/me/');
-						const orgIds: string[] = me.organizations || [];
+						const me = await closeApiRequest.call(this, 'GET', '/me/') as IDataObject;
+						// Close returns organization objects from /me/, not an array of raw organization IDs.
+						const organizations = (me.organizations || []) as Array<IDataObject | string>;
+						const orgIds = organizations
+							.map((organization) => typeof organization === 'string' ? organization : organization?.id as string | undefined)
+							.filter((organizationId): organizationId is string => Boolean(organizationId));
 						const inactiveUsers: IDataObject[] = [];
 						for (const orgId of orgIds) {
 							const org = await closeApiRequest.call(this, 'GET', `/organization/${orgId}/`, {}, { _fields: 'inactive_memberships' });
