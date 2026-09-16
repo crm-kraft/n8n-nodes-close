@@ -148,3 +148,25 @@ Other n8n community nodes maintained by CRM Kraft:
 - [`n8n-nodes-calendly`](https://www.npmjs.com/package/n8n-nodes-calendly) — Calendly integration for n8n
 - [`n8n-nodes-youcanbookme`](https://www.npmjs.com/package/n8n-nodes-youcanbookme) — YouCanBookMe integration for n8n
 - [`n8n-nodes-ablefy`](https://www.npmjs.com/package/n8n-nodes-ablefy) — Ablefy integration for n8n
+
+### Create or Update by Fields (ordered matching)
+
+Leads, contacts and opportunities have an additional **Create or Update by Fields** operation. The existing opportunity **Create or Update** operation is unchanged.
+
+1. Add **Match Keys** in priority order. Select standard or custom fields loaded from your Close account. Leads can also be matched through contact email, phone or contact custom fields. An expression can specify another searchable standard field by API name.
+2. Supply **Fields to Write** using the field mapper. Custom fields, statuses and user options are loaded from Close.
+3. Keep **Preview Only** enabled to inspect the proposed action and patch, then disable it to apply changes.
+
+Empty keys are skipped (zero is not empty). A key with no exact match falls back to the next key. The first unique match wins; lower-priority keys are not checked. For multiple matches, choose **Stop With Error** (default), **Update First Match**, or **Return All Matches Without Updating**. First means Close search response order, which can change. Return All emits one n8n item per full record with `action: multiple_matches`, `matchCount` and match metadata, and performs no writes. Lower-priority keys are not evaluated after multiple matches. Filter or sort these items downstream, then use Update by ID for custom selection. Related contacts belonging to the same lead count as one lead match. Search errors and incomplete pagination are errors, never interpreted as an absent record.
+
+Contacts are scoped to a required lead. Opportunities are scoped to a required lead and pipeline. On creation, all nonempty match keys are copied into the new record; conflicting supplied values are rejected. Lead creation requires a name, opportunity creation requires a status. Read-only keys such as record ID can find existing records but cannot create missing records.
+
+For existing records, only **Fields to Write** are changed. Earlier unmatched keys are not automatically backfilled. Choose **Fill Empty Fields Only** to preserve populated values, including zero. Supplied arrays replace entire arrays. Null and empty-string write values are omitted, consistent with the existing node; they do not clear fields.
+
+Email matching ignores case and surrounding whitespace. Phone matching requires international format; formatting characters are removed but no country code is inferred. Other fields use exact values; a scalar key on a multi-value custom field matches an element. Numeric custom fields accept numeric strings. Date keys use `YYYY-MM-DD`; datetime values must include a timezone and match the API representation.
+
+Output contains `action`, `matchedBy`, `matchTrace`, `preview` and `id`, plus `patch` for preview or `record` after execution. Preview action names describe the proposed action.
+
+This is a client-side search followed by create/update, **not an atomic uniqueness guarantee**. Concurrent executions or Close search-index delay can still create duplicates. Serialize writes for the same identity and account for indexing delay before retries. Some non-text custom field searches fetch all records where that field exists before comparing exact values, which may be expensive on large accounts. No customer-specific IDs or business rules are embedded.
+
+Run focused tests with `npm run build && node --test test/record-upsert.test.cjs`.
