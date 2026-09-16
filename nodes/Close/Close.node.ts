@@ -1613,7 +1613,7 @@ export class Close implements INodeType {
 					loadOptionsMethod: 'getCustomFieldsToClear',
 					loadOptionsDependsOn: ['resource', 'activityTypeId'],
 				},
-				description: 'Choose fields to explicitly clear, or specify IDs using an expression. Sends null to Close. Unselected fields remain unchanged. A field cannot also be set in Custom Fields.',
+				description: 'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 
 			// ─── CUSTOM ACTIVITY TYPE ─────────────────────────────────────────────────
