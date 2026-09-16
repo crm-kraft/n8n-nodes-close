@@ -148,3 +148,17 @@ Other n8n community nodes maintained by CRM Kraft:
 - [`n8n-nodes-calendly`](https://www.npmjs.com/package/n8n-nodes-calendly) — Calendly integration for n8n
 - [`n8n-nodes-youcanbookme`](https://www.npmjs.com/package/n8n-nodes-youcanbookme) — YouCanBookMe integration for n8n
 - [`n8n-nodes-ablefy`](https://www.npmjs.com/package/n8n-nodes-ablefy) — Ablefy integration for n8n
+
+### Explicitly clear custom fields
+
+Lead, Contact, Opportunity and Custom Activity **Update** operations include
+**Custom Fields to Clear**. Select fields by name (or provide field IDs with an
+expression) to send explicit `null` values to Close. This clears the stored value;
+it does not delete the field definition.
+
+Unselected fields remain unchanged. The existing Custom Fields mapper still skips
+empty values, so existing workflows keep their behavior. Setting and clearing the
+same field in one operation raises an error rather than silently choosing a value.
+For Custom Activities, select the Activity Type to load its available fields.
+
+Contributor check: `npm run build && node --test test/*.test.cjs`.
