@@ -162,7 +162,7 @@ export class CloseTrigger implements INodeType {
 				type: 'options',
 				options: [
 					{ name: 'Every Publish', value: 'every', description: 'Trigger every time the activity is published or re-published' },
-					{ name: 'First Publish Only', value: 'first', description: 'Trigger only for the initial publication, excluding re-publishes and updates consolidated more than one minute after event creation' },
+					{ name: 'First Publish Only', value: 'first', description: 'Trigger only for the initial publication, excluding re-publishes' },
 				],
 				default: 'first',
 				displayOptions: { show: { event: ['custom_activity_published'] } },
@@ -432,8 +432,7 @@ export class CloseTrigger implements INodeType {
 		const bodyData = this.getBodyData() as IDataObject;
 		const event = this.getNodeParameter('event') as string;
 
-		// For custom_activity_published with 'First Publish Only', filter out re-publishes
-		// and later updates that Close consolidates into the original publication event.
+		// For custom_activity_published with 'First Publish Only', filter out re-publishes.
 		if (event === 'custom_activity_published') {
 			const publishTriggerOn = this.getNodeParameter('publishTriggerOn', 'every') as string;
 			if (publishTriggerOn === 'first') {
@@ -442,14 +441,6 @@ export class CloseTrigger implements INodeType {
 				const previousData = closeEvent.previous_data as IDataObject | undefined;
 				const lastPublishedAt = previousData?.last_published_at;
 				if (lastPublishedAt !== null && lastPublishedAt !== undefined && lastPublishedAt !== '') {
-					return {};
-				}
-
-				// Event consolidation retains date_created and changes date_updated. Emit only when
-				// date_updated occurs within one minute of date_created for the first-publish trigger.
-				const createdAt = Date.parse(String(closeEvent.date_created ?? ''));
-				const updatedAt = Date.parse(String(closeEvent.date_updated ?? ''));
-				if (!Number.isFinite(createdAt) || !Number.isFinite(updatedAt) || updatedAt >= createdAt + 60_000) {
 					return {};
 				}
 			}
