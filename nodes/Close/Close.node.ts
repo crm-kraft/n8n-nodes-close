@@ -15,6 +15,8 @@ import {
 		ResourceMapperField,
 	} from 'n8n-workflow';
 import { closeApiRequest, closeApiRequestAllItems } from './GenericFunctions';
+import { upsertRecord, standardFields, type MatchKey, type UpsertResource } from './RecordUpsert';
+import { upsertProperties } from './RecordUpsertDescription';
 
 
 // ─── Helper: build ResourceMapperFields from Close CRM custom field list ─────
@@ -130,6 +132,7 @@ export class Close implements INodeType {
 			},
 		],
 		properties: [
+			...upsertProperties,
 			// ─── RESOURCE SELECTOR ───────────────────────────────────────────────────
 			{
 				displayName: 'Resource',
@@ -169,6 +172,7 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['lead'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a lead' },
+					{ name: 'Create or Update by Fields', value: 'upsertByFields', action: 'Create or update lead by fields' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a lead' },
 					{ name: 'Get', value: 'get', action: 'Get a lead' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many leads' },
@@ -357,6 +361,7 @@ export class Close implements INodeType {
 				displayOptions: { show: { resource: ['contact'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a contact' },
+					{ name: 'Create or Update by Fields', value: 'upsertByFields', action: 'Create or update contact by fields' },
 					{ name: 'Delete', value: 'delete', action: 'Delete a contact' },
 					{ name: 'Get', value: 'get', action: 'Get a contact' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many contacts' },
@@ -529,6 +534,7 @@ export class Close implements INodeType {
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create an opportunity' },
 					{ name: 'Create or Update', value: 'upsert', action: 'Create or update an opportunity' },
+					{ name: 'Create or Update by Fields', value: 'upsertByFields', action: 'Create or update opportunity by fields' },
 					{ name: 'Delete', value: 'delete', action: 'Delete an opportunity' },
 					{ name: 'Get', value: 'get', action: 'Get an opportunity' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many opportunities' },
@@ -2261,6 +2267,23 @@ export class Close implements INodeType {
 
 	methods = {
 		loadOptions: {
+			async getUpsertMatchFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const resource = this.getCurrentNodeParameter('resource') as UpsertResource;
+				const schema = await closeApiRequest.call(this, 'GET', `/custom_field_schema/${resource}/`);
+				const options: INodePropertyOptions[] = [
+					{ name: 'ID', value: 'id' },
+					...standardFields[resource].filter(f => !['emails', 'phones', 'urls'].includes(f)).map(f => ({ name: f, value: f })),
+					...((schema.fields || []) as IDataObject[]).map(f => ({ name: `Custom: ${f.name}`, value: `custom.${f.id}` })),
+				];
+				if (resource === 'contact') options.push({ name: 'Email', value: 'email' }, { name: 'Phone', value: 'phone' });
+				if (resource === 'lead') {
+					const contactSchema = await closeApiRequest.call(this, 'GET', '/custom_field_schema/contact/');
+					options.push({ name: 'Contact: Email', value: 'contact.email' }, { name: 'Contact: Phone', value: 'contact.phone' },
+						...((contactSchema.fields || []) as IDataObject[]).map(f => ({ name: `Contact custom: ${f.name}`, value: `contact.custom.${f.id}` })));
+				}
+				return options;
+			},
+
 			async getLeadStatuses(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const response = await closeApiRequest.call(this, 'GET', '/status/lead/');
 				return (response.data || []).map((s: IDataObject) => ({
@@ -2375,6 +2398,29 @@ export class Close implements INodeType {
 		},
 
 			resourceMapping: {
+				async getUpsertWriteFields(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+					const resource = this.getCurrentNodeParameter('resource') as UpsertResource;
+					const schema = await closeApiRequest.call(this, 'GET', `/custom_field_schema/${resource}/`);
+					const definitions = (schema.fields || []) as IDataObject[];
+					const mapped = buildResourceMapperFields(definitions).fields;
+					const needsUsers = resource === 'opportunity' || definitions.some(f => f.type === 'user' && !f.accepts_multiple_values);
+					const users = needsUsers ? await closeApiRequestAllItems.call(this, 'GET', '/user/') : [];
+					const userOptions = users.map((u: IDataObject) => ({ name: String(u.first_name || '') + ' ' + String(u.last_name || ''), value: String(u.id) }));
+					const statusOptions = resource !== 'contact' ? ((await closeApiRequest.call(this, 'GET', `/status/${resource}/`)).data || []).map((s: IDataObject) => ({ name: String(s.label), value: String(s.id) })) : [];
+					const fields: ResourceMapperField[] = standardFields[resource].map(f => ({
+						id: f, displayName: f, required: false, defaultMatch: false, display: true,
+						type: ['value', 'confidence'].includes(f) ? 'number' : ['emails', 'phones', 'urls'].includes(f) ? 'array' : ['status_id', 'user_id'].includes(f) ? 'options' : 'string',
+						...(f === 'status_id' ? { options: statusOptions } : {}), ...(f === 'user_id' ? { options: userOptions } : {}),
+					}));
+					for (let index = 0; index < mapped.length; index++) {
+						const field = mapped[index]; const def = definitions[index];
+						fields.push({ ...field, id: `custom.${field.id}`,
+							...(def.accepts_multiple_values ? { type: 'array' as const, options: undefined } : def.type === 'date' ? { type: 'string' as const } : def.type === 'user' ? { type: 'options' as const, options: userOptions } : {}),
+						});
+					}
+					return { fields };
+				},
+
 				async getLeadCustomFieldsForMapper(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 					const [leadResp, sharedResp] = await Promise.all([
 						closeApiRequest.call(this, 'GET', '/custom_field/lead/'),
@@ -2429,6 +2475,28 @@ export class Close implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				let responseData: IDataObject | IDataObject[] = [];
+
+				if (operation === 'upsertByFields') {
+					const keys = this.getNodeParameter('upsertMatchKeys', i, {}) as { keys?: MatchKey[] };
+					const mapper = this.getNodeParameter('upsertValues', i, {}) as IDataObject;
+					responseData = await upsertRecord(
+						(method, path, body) => closeApiRequest.call(this, method, path, body),
+						{ resource: resource as UpsertResource, matchKeys: keys.keys || [], values: (mapper.value || {}) as IDataObject,
+							leadId: this.getNodeParameter('upsertLeadId', i, '') as string,
+							pipelineId: this.getNodeParameter('upsertPipelineId', i, '') as string,
+							updateMode: this.getNodeParameter('upsertUpdateMode', i, 'replace') as 'replace' | 'fillEmpty',
+							preview: this.getNodeParameter('upsertPreview', i, true) as boolean,
+							multipleMatches: this.getNodeParameter('upsertMultipleMatches', i, 'error') as 'error' | 'first' | 'returnAll',
+						},
+					);
+					if (responseData.action === 'multiple_matches') {
+						const { records, ...metadata } = responseData;
+						for (const record of records as IDataObject[]) returnData.push({ json: { ...metadata, id: record.id, record }, pairedItem: { item: i } });
+					} else {
+						returnData.push({ json: responseData, pairedItem: { item: i } });
+					}
+					continue;
+				}
 
 				// ── LEAD ──────────────────────────────────────────────────────────────
 				if (resource === 'lead') {
