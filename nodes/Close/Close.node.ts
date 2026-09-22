@@ -209,7 +209,7 @@ export class Close implements INodeType {
 				type: 'collection',
 				placeholder: 'Add Field',
 				default: {},
-				displayOptions: { show: { resource: ['lead'], operation: ['create', 'update'] } },
+				displayOptions: { show: { resource: ['lead'], operation: ['create'] } },
 				options: [
 					{ displayName: 'Contact Email', name: 'contact_email', type: 'string', default: '', description: 'Email address of the primary contact (creates a contact on the lead)' },
 					{ displayName: 'Contact Name', name: 'contact_name', type: 'string', default: '', description: 'Full name of the primary contact (creates a contact on the lead)' },
@@ -217,6 +217,44 @@ export class Close implements INodeType {
 					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
 					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
 																																		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
+					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
+				],
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['lead'], operation: ['update'] } },
+				options: [
+					{
+						displayName: 'Address',
+						name: 'addresses',
+						type: 'fixedCollection',
+						placeholder: 'Add Address',
+						default: {},
+						typeOptions: { multipleValues: true },
+						options: [
+							{
+								name: 'addressValues',
+								displayName: 'Address',
+								values: [
+									{ displayName: 'Label', name: 'label', type: 'string', default: 'business', description: 'A label for the address, such as business or home' },
+									{ displayName: 'Address Line 1', name: 'address_1', type: 'string', default: '' },
+									{ displayName: 'Address Line 2', name: 'address_2', type: 'string', default: '' },
+									{ displayName: 'City', name: 'city', type: 'string', default: '' },
+									{ displayName: 'State or Region', name: 'state', type: 'string', default: '' },
+									{ displayName: 'ZIP or Postal Code', name: 'zipcode', type: 'string', default: '' },
+									{ displayName: 'Country', name: 'country', type: 'string', default: '' },
+								],
+							},
+						],
+					},
+					{ displayName: 'Description', name: 'description', type: 'string', default: '' },
+					{ displayName: 'Display Name', name: 'display_name', type: 'string', default: '', description: 'The lead name displayed in Close' },
+					{ displayName: 'Status Name or ID', name: 'status_id', type: 'options',
+							description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>', typeOptions: { loadOptionsMethod: 'getLeadStatuses' }, default: '' },
 					{ displayName: 'URL', name: 'url', type: 'string', default: '' },
 				],
 			},
@@ -2494,9 +2532,28 @@ export class Close implements INodeType {
 					const leadId = this.getNodeParameter('leadId', i) as string;
 					const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 					const body: IDataObject = {};
+					// Close exposes this value as display_name but accepts `name` for lead updates.
+					if (additionalFields.display_name) body.name = additionalFields.display_name;
 					if (additionalFields.description) body.description = additionalFields.description;
 					if (additionalFields.status_id) body.status_id = additionalFields.status_id;
 					if (additionalFields.url) body.url = additionalFields.url;
+					const addressCollection = additionalFields.addresses as IDataObject | undefined;
+					const addressValues = (addressCollection?.addressValues ?? []) as IDataObject[];
+					if (addressValues.length > 0) {
+						const addresses = addressValues
+							.map((address) => {
+								const mappedAddress: IDataObject = {};
+								for (const field of ['label', 'address_1', 'address_2', 'city', 'state', 'zipcode', 'country']) {
+									const value = address[field];
+									if (value !== null && value !== undefined && value !== '') {
+										mappedAddress[field] = value;
+									}
+								}
+								return mappedAddress;
+							})
+							.filter((address) => Object.keys(address).length > 0);
+						if (addresses.length > 0) body.addresses = addresses;
+					}
 					const cfMapper = this.getNodeParameter('customFields', i, {}) as IDataObject;
 					const cfValue = (cfMapper?.value ?? {}) as IDataObject;
 					for (const [k, v] of Object.entries(cfValue)) {
