@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintained by CRM Kraft](https://img.shields.io/badge/Maintained%20by-CRM%20Kraft-blue)](https://crm-kraft.com)
 
-The most complete and actively maintained **Close CRM** community node for [n8n](https://n8n.io). Supports 87+ operations across 19 resources. Built and maintained by [CRM Kraft](https://crm-kraft.com) — a specialist Close CRM consultancy with 5+ years of experience and 130+ Close CRM implementations.
+A full-featured, actively maintained **Close CRM** community node for [n8n](https://n8n.io). Supports 90+ operations across 19 resources. Built and maintained by [CRM Kraft LLC](https://crm-kraft.com) — a specialist Close CRM and sales-automation consultancy and official Close partner, with 5+ years of experience and 150+ Close CRM implementations.
 
 ---
 
@@ -13,7 +13,7 @@ The most complete and actively maintained **Close CRM** community node for [n8n]
 
 - **Full Action Node** — Create, read, update, and delete all major Close CRM resources directly from your n8n workflows
 - **Comprehensive Trigger Node** — React to any Close CRM event in real time via webhooks, covering every trigger that Zapier supports and more
-- **Published Custom Activity Trigger** — A uniquely powerful trigger that fires precisely when a custom activity is published, using Close's server-side filtering for reliability
+- **Published Custom Activity Trigger** — A trigger that fires precisely when a custom activity is published, using Close's server-side filtering for reliability
 - **Actively maintained** — Kept up to date with every Close CRM API change by a dedicated engineering team
 
 ---
@@ -51,25 +51,25 @@ Perform operations on all major Close CRM resources.
 
 | Resource | Operations |
 |---|---|
-| **Lead** | Create, Get, Get All, Update, Delete, Search |
+| **Lead** | Create, Get, Get All, Update, Delete, Search, Merge |
 | **Contact** | Create, Get, Get All, Update, Delete |
-| **Opportunity** | Create, Get, Get All, Update, Delete |
+| **Opportunity** | Create, Create or Update, Get, Get All, Update, Delete |
 | **Task** | Create, Get, Get All, Update, Delete |
 | **Note** | Create, Get, Get All, Update, Delete |
 | **Call** | Create, Get, Get All, Update, Delete |
 | **Email** | Create, Get, Get All, Update, Delete |
-| **SMS** | Create, Get, Get All |
-| **Pipeline** | Get, Get All |
-| **Lead Status** | Get, Get All |
-| **Opportunity Status** | Get, Get All |
-| **Custom Field** | Get Many |
-| **Smart View** | Get Many, Get Leads |
-| **Email Template** | Get, Get Many |
+| **SMS** | Create, Get, Get All, Update, Delete |
+| **Pipeline** | Create, Get, Get All, Update, Delete |
+| **Lead Status** | Create, Get, Get All, Update, Delete |
+| **Opportunity Status** | Create, Get, Get All, Update, Delete |
+| **Custom Field** | Create, Get, Get Many, Update, Delete, Add Dropdown Option, Associate Shared Field |
+| **Smart View** | Create, Get, Get Many, Update, Delete, Get Leads |
+| **Email Template** | Create, Get, Get Many, Update, Delete |
 | **Integration Link** | Create, Get, Get Many, Update, Delete |
 | **Custom Activity** | Create, Get, Get All, Update, Delete |
-| **Custom Activity Type** | Get, Get All |
-| **Comment** | Create, Get, Get All, Update, Delete |
-| **User** | Get, Get All |
+| **Custom Activity Type** | Create, Get, Get All, Update, Delete |
+| **Comment** | Create, Get All, Delete |
+| **User** | Get, Get All, Get Me |
 
 ---
 
@@ -90,11 +90,12 @@ Starts a workflow automatically when a selected event occurs in Close CRM. The n
 | **Email** | Created, Updated, Deleted, Sent |
 | **SMS** | Created, Updated, Deleted, Sent |
 | **Meeting** | Created, Updated, Deleted, Scheduled, Started, Completed, Canceled |
-| **Custom Activity** | Created, Updated, Deleted |
+| **Custom Activity** | Updated, Deleted |
 | **On Custom Activity Published** ⭐ | Fires when a custom activity is published (created as published or status changed to published) |
 | **Lead Status Changed** | — |
 | **Opportunity Status Changed** | — |
 | **Form Submission Created** | — |
+| **Workflow Subscription** | Created, Updated, Deleted |
 | **Email Unsubscribed / Resubscribed** | — |
 
 #### On Custom Activity Published ⭐
@@ -104,7 +105,7 @@ This trigger uses Close CRM's server-side `extra_filter` to fire **only** when a
 - `updated` with filter: `status == published AND changed_fields contains "status"`
 - `created` with filter: `status == published`
 
-This matches the behaviour of Zapier's "Published Custom Activity" trigger and is the most precise way to detect publishing events in Close CRM.
+This matches the behaviour of Zapier's "Published Custom Activity" trigger and detects publishing events precisely.
 
 ---
 
@@ -119,7 +120,7 @@ This matches the behaviour of Zapier's "Published Custom Activity" trigger and i
 
 ## About CRM Kraft
 
-[CRM Kraft](https://crm-kraft.com) is a specialist CRM automation consultancy based in Germany. We have been implementing Close CRM solutions for B2B companies for over 5 years, with more than 130 successful projects delivered. Our team of 11, including full-time programmers, builds and maintains automation infrastructure on top of Close CRM and n8n for clients across Europe and beyond.
+[CRM Kraft LLC](https://crm-kraft.com) is a specialist Close CRM and sales-automation consultancy. For 5+ years we have built Close CRM setups, migrations and AI workflows for B2B teams, with 150+ clients across Europe and beyond, in English and German.
 
 We built this node because we use it ourselves — every day, across every client project. That means it is always kept up to date, thoroughly tested in production, and built with a deep understanding of how Close CRM actually works.
 

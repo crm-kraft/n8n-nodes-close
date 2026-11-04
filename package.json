@@ -1,7 +1,7 @@
 {
 	"name": "@crm-kraft/n8n-nodes-close",
-	"version": "2.3.68",
-	"description": "The most complete Close CRM node for n8n. 80+ operations across 19 resources: leads (with merge), contacts, opportunities, tasks, notes, calls, emails, sms, custom activities, custom activity types, comments, email templates, smart views, pipelines, lead statuses, opportunity statuses, custom fields, integration links, and users. Includes a full webhook trigger node. Maintained by CRM Kraft, a Close CRM specialist with 130+ implementations.",
+	"version": "2.3.69",
+	"description": "A full-featured, actively maintained Close CRM node for n8n. 90+ operations across 19 resources: leads (with merge), contacts, opportunities, tasks, notes, calls, emails, sms, custom activities, custom activity types, comments, email templates, smart views, pipelines, lead statuses, opportunity statuses, custom fields, integration links, and users. Includes a full webhook trigger node. Maintained by CRM Kraft LLC, a Close CRM and sales-automation consultancy and official Close partner with 150+ implementations.",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
@@ -26,8 +26,9 @@
 	],
 	"license": "MIT",
 	"author": {
-		"name": "CRM Kraft",
-		"email": "justus@crm-kraft.de"
+		"name": "CRM Kraft LLC",
+		"email": "justus@crm-kraft.de",
+		"url": "https://crm-kraft.com"
 	},
 	"repository": {
 		"type": "git",
